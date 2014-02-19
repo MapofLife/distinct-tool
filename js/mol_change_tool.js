@@ -2,6 +2,7 @@ var scientificname = getURLParameter("name"),
     latest = 0, 
     commonnames = '',
     modis_maptypes = {},
+    mod_params,
     chartData = [],
     speciesPrefs,
     host = '', //(window.location.hostname != 'localhost') ?
@@ -226,6 +227,8 @@ function init() {
               callBackend(speciesPrefs);     
           }
       );
+      
+      $('.assess').click(doAssessment);
 
       $('.mode').change(
           function() {
@@ -240,6 +243,19 @@ function init() {
         $('.working').hide();
         clearCharts();
     }
+}
+function doAssessment () {
+    mod_params["mode"]= "assess";
+    mod_params["sciname"]= scientificname;
+    mod_params["call_ver"]= latest;
+       
+        $.getJSON(
+            '/api/assess',
+            mod_params,
+            function(response) {
+                alert(response.toString());
+            }
+        );
 }
 function clearCharts() {
     $('.map_container').empty();
@@ -333,9 +349,10 @@ function callBackend(response) {
         new google.maps.LatLng(response.rows[0].miny, response.rows[0].minx),
         new google.maps.LatLng(response.rows[0].maxy, response.rows[0].maxx)
     );
-    habitats = response.rows[0].modis_habitats.split(','),
+            habitats = response.rows[0].modis_habitats.split(','),
             elev = [response.rows[0].mine, response.rows[0].maxe],
-            ee_id = response.rows[0].ee_id,
+            ee_id = response.rows[0].ee_id;
+            
         mod_params = {
             habitats : response.rows[0].modis_habitats,
             elevation : elev.join(','),

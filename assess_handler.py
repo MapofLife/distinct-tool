@@ -28,9 +28,10 @@ class AssessHandler(webapp2.RequestHandler):
             "ST_Y(ST_Transform(the_geom_webmercator,4326)) as lat " \
             "FROM get_tile('gbif','points','%s','gbif_taxloc') " \
             "order by random() limit 1000"
+        
         qstr = urllib.quote_plus((sql % (sciname)))
         url = cdburl % (qstr)
-
+        logging.info(url)
         points = urlfetch.fetch(url)
         return points.content
         

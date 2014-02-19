@@ -6,7 +6,7 @@ from oauth2client.appengine import AppAssertionCredentials
 #Global variables
 EE_URL = 'https://earthengine.googleapis.com'
 CDB_URL = 'http://mol.cartodb.com/api/v2/sql'
-EE_ACCOUNT = ''
+EE_ACCOUNT = '205878743334-4mrtqgu0n5rnsv1vanrvv6atqk6vu8am@developer.gserviceaccount.com'
 
 EE_PRIVATE_KEY_FILE = 'privatekey.pem'
 

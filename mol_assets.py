@@ -46,3 +46,7 @@ tree_cover = {
 
 elevation = 'GME/images/04040405428907908306-08319720230328335274'
 
+forest = 'UMD/hansen/global_forest_change_2013'
+
+
+
