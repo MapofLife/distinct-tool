@@ -1,4 +1,4 @@
-change-tool
+forest-tool
 ===========
 
-A species range change analysis tool that uses Google Earth Engine to plot variations in a species' range over time.
+A habitat analysis tool that uses Google Earth Engine plot and map habitat area change due to forest loss and gain over time.
