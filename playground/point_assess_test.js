@@ -1,4 +1,5 @@
 //Point Assessment - Test Harness (benc)
+//github.com/MapofLife/forest-tool/blob/master/playground/point_assess_test.js
 centerMap(-114,33,6);
 
 //new approach
