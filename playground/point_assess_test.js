@@ -2,6 +2,17 @@
 //github.com/MapofLife/forest-tool/blob/master/playground/point_assess_test.js
 centerMap(-114,33,7);
 
+//new layers
+/*var forest = ee.Image('GME/images/04040405428907908306-09310201000644038383');
+forest = forest.divide(100);
+addToMap(forest,{palette:'FCB360,065202',min:0,max:100},"% Forest Cover");
+
+var modis0 = ee.Image('GME/images/04040405428907908306-03680284325645907752');
+addToMap(modis0,{palette:'FFFFFF,021E52',min:0,max:1},"MODIS 0");
+
+var modis0 = ee.Image('GME/images/04040405428907908306-03680284325645907752');
+addToMap(modis0,{palette:'FFFFFF,021E52',min:0,max:1},"MODIS 0");*/
+
 var fcSonora = ee.FeatureCollection('ft:1Ec8IWsP8asxN-ywSqgXWMuBaxI6pPaeh6hC64lA')
   .filter(ee.Filter.eq('ECO_NAME', 'Sonoran desert'));
 
