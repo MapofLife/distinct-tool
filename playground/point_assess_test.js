@@ -1,6 +1,6 @@
 //Point Assessment - Test Harness (benc)
 //github.com/MapofLife/forest-tool/blob/master/playground/point_assess_test.js
-centerMap(-114,33,6);
+centerMap(-114,33,7);
 
 var fcSonora = ee.FeatureCollection('ft:1Ec8IWsP8asxN-ywSqgXWMuBaxI6pPaeh6hC64lA')
   .filter(ee.Filter.eq('ECO_NAME', 'Sonoran desert'));
@@ -38,7 +38,8 @@ range = range.select(['elevation'],['habitat']);
 refined = refined.select(['elevation'],['habitat']);
 
 var allrange = ee.ImageCollection.fromImages([range,refined])
-                  .reduce(ee.Reducer.max());
+                  .reduce(ee.Reducer.max())
+                  .mask(ee.Image(1))
 
 ////
 // run the analysis
@@ -53,6 +54,6 @@ print(inExpRange0.getInfo());
 
 //addToMap(range,{palette:"4C7A01"}, "Range");
 //addToMap(refined,{palette:"05A351"}, "Refined");
-addToMap(allrange,{palette:"000000,9BF2F2,52238C",min:0,max:2},"All Range");
-addToMap(pointsBuf,{},"Buffers");
+addToMap(allrange.clip(fcSonora),{palette:"000000,9BF2F2,52238C",min:0,max:2},"All Range");
+addToMap(inExpRange0,{},"Buffers");
 addToMap(points,{},"Points");
