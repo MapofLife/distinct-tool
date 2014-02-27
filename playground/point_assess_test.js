@@ -2,17 +2,6 @@
 //github.com/MapofLife/forest-tool/blob/master/playground/point_assess_test.js
 centerMap(-114,33,7);
 
-//new layers
-/*var forest = ee.Image('GME/images/04040405428907908306-09310201000644038383');
-forest = forest.divide(100);
-addToMap(forest,{palette:'FCB360,065202',min:0,max:100},"% Forest Cover");
-
-var modis0 = ee.Image('GME/images/04040405428907908306-03680284325645907752');
-addToMap(modis0,{palette:'FFFFFF,021E52',min:0,max:1},"MODIS 0");
-
-var modis0 = ee.Image('GME/images/04040405428907908306-03680284325645907752');
-addToMap(modis0,{palette:'FFFFFF,021E52',min:0,max:1},"MODIS 0");*/
-
 var fcSonora = ee.FeatureCollection('ft:1Ec8IWsP8asxN-ywSqgXWMuBaxI6pPaeh6hC64lA')
   .filter(ee.Filter.eq('ECO_NAME', 'Sonoran desert'));
 
@@ -23,7 +12,7 @@ var fcPointPoly = new ee.FeatureCollection([
     ]);
 
 //take a collection of random points.
-var points = ee.FeatureCollection.randomPoints({region:fcPointPoly, points:200});
+var points = ee.FeatureCollection.randomPoints({region:fcPointPoly, points:25});
 
 //buffer points by 10km
 var pointsBuf = points.map(function(f){return f.buffer(10000)});
@@ -39,6 +28,7 @@ var refined = range.gte(400);
 refined = refined.mask(refined);
 
 //we need to set up the data so that range has 1, refined has 2
+//this code seems pretty hacky, there must be a better way
 range = range.subtract(range); //set up range so that its 0
 range = range.add(1); //now add one 
 //refined is masked so we can't just add.  instead set to 2 where its currently 1
@@ -50,21 +40,34 @@ refined = refined.select(['elevation'],['habitat']);
 
 var allrange = ee.ImageCollection.fromImages([range,refined])
                   .reduce(ee.Reducer.max())
-                  .mask(ee.Image(1))
+                  .mask(ee.Image(1));
 
 ////
 // run the analysis
 ////
 
 //now we have the layer that has 1 for original range and 2 for refined range
-//use reduce regions with the buffered points to 
-var inExpRange0 = allrange.reduceRegions(pointsBuf,ee.Reducer.max(),1000);
+//use reduce regions with the buffered points to find the maxim pixel
+var pointsBufMax = allrange.reduceRegions(pointsBuf,ee.Reducer.max(),1000);
 
-//I would expect each feature to have a "max" property, but only some do.
-print(inExpRange0.getInfo());              
+//filter results
+var outRange = pointsBufMax.filter(ee.Filter.eq('max',0));
+var inExpOutRef = pointsBufMax.filter(ee.Filter.eq('max',1));
+var inRef = pointsBufMax.filter(ee.Filter.eq('max',2));
 
-//addToMap(range,{palette:"4C7A01"}, "Range");
-//addToMap(refined,{palette:"05A351"}, "Refined");
+////
+// output results
+////
+print('Outside range: ' + outRange.aggregate_count('max').getInfo());              
+print('Inside range but outside refined range: ' + inExpOutRef.aggregate_count('max').getInfo()); 
+print('Inside refined range: ' + inRef.aggregate_count('max').getInfo()); 
+
 addToMap(allrange.clip(fcSonora),{palette:"000000,9BF2F2,52238C",min:0,max:2},"All Range");
-addToMap(inExpRange0,{},"Buffers");
+
+//comment any two of these and there will be no Tile errors
+addToMap(outRange.draw('9C031D',3,0),{},"Outside range");
+addToMap(inExpOutRef.draw('FACB0F',3,0),{},"Inside range outside refined range");
+addToMap(inRef.draw('800000',3,0),{},"Inside refined range");
+
+//addToMap(pointsBufMax,{},"Buffers");
 addToMap(points,{},"Points");
