@@ -1,4 +1,5 @@
-//new layers
+//range_refine_test
+//https://github.com/MapofLife/forest-tool/blob/master/playground/range_refine_test.js
 
 //pull in a range map
 //04040405428907908306-04550633376616161003 Abeomelomys_sevia range
