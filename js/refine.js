@@ -7,9 +7,10 @@ var scientificname = getURLParameter("name"),
     speciesPrefs,
     host = '', //(window.location.hostname != 'localhost') ?
         //'http://d152fom84hgyre.cloudfront.net/' : '',
-    map = null;
     map_options = {
-        zoom: 1,
+        zoom: 2,
+        minZoom: 2,
+        scaleControl: true,
         center: new google.maps.LatLng(0,0),
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         streetViewControl: false,
@@ -59,7 +60,9 @@ var scientificname = getURLParameter("name"),
             ]
           }
         ]               
-    };
+    },
+    map = new google.maps.Map($('.map')[0],map_options);
+    
                     
 google.setOnLoadCallback(init);
 
@@ -85,11 +88,7 @@ function getImage() {
             var src = response.responseData.results[0].url;
             $('.image').empty();
             $('.image').append($('<img class="specimg" src="'+src+'">'));
-            if($('.specimg').width()>$('.specimg').height()) {
-                $('.specimg').width(250);
-            } else {
-                $('.specimg').height(250);
-            }
+            
         },
         'jsonp'
     );
@@ -118,7 +117,6 @@ function init() {
                 setTimeout(2000,"$('.search').autocomplete('close');");
             }
         });
-        
         
         //Set up autocomplete
         $('.search').autocomplete({
@@ -181,32 +179,50 @@ function init() {
             }
       });
       
-      $('.unsuitable [class*=class_]').click(
+      $('.habitats [class*=class_]').click(
           function() {
-              $(this).hide();
-              $('.suitable .' + $(this).attr('class')).show();
+              if($(this).hasClass('selected')) {
+                  $(this).removeClass('selected');
+              } else {
+                  $(this).addClass('selected');
+              }
               $('.rerun').show();
           }
       );
+
       
-      $('.suitable [class*=class_]').click(
-          function() {
-              var habitats;
-              $(this).hide();
-              $('.unsuitable .' + $(this).attr('class')).show();
-              $('.rerun').show();
-           }
-      );
-      
-      $('.elev_range').slider(
+      $('.elev .range').slider(
           {
               range: true,
               min: -500,
               max: 8000,
               values: [ -500, 8000 ],
+              step: 100,
+              rangeDrag: true, 
               slide: function( event, ui ) {
-                $('.elev_min').html('Elevation range from ' + ui.values[ 0 ]+ 'm ');
-                $('.elev_max').html(ui.values[ 1 ] + 'm');
+                $('.elev .values').html(
+                    'Elevation range: ' + 
+                    ui.values[ 0 ]+ 
+                    'm to ' +
+                    ui.values[ 1 ] + 'm');
+                $('.rerun').show();
+              }
+        }
+      );
+      $('.forest .range').slider(
+          {
+              range: true,
+              min: 0,
+              max: 100,
+              step: 5,
+              values: [0, 100 ],
+              rangeDrag: true, 
+              slide: function( event, ui ) {
+                $('.forest .values').html(
+                    'Forest coverage: ' + 
+                    ui.values[ 0 ]+ 
+                    '% to ' +
+                    ui.values[ 1 ] + '%');
                 $('.rerun').show();
               }
         }
@@ -215,15 +231,13 @@ function init() {
       $('.rerun').click(
           function() {
               speciesPrefs.rows[0].modis_habitats = _.map(
-                  $('.suitable [class*=class_]:visible'),
+                  $('.habitats [class*=class_] .selected'),
                   function(elem,index) {
                     return $(elem).attr("class").replace("class_","");
                   }
               ).join(',');
-              speciesPrefs.rows[0].mine = $('.range_slider').slider('values',0);
-              speciesPrefs.rows[0].maxe = $('.range_slider').slider('values',1);
-              clearCharts()
-              showLoaders();
+              speciesPrefs.rows[0].mine = $('.elev .range').slider('values',0);
+              speciesPrefs.rows[0].maxe = $('.elev .range').slider('values',1);
               callBackend(speciesPrefs);     
           }
       );
@@ -258,15 +272,10 @@ function doAssessment () {
         );
 }
 function clearCharts() {
-    $('.map_container').empty();
-    $('.pop_chart').empty();
-    $('.area_chart').empty();
-    $('.modeContainer').hide();
+    
 }
 function showLoaders() {
-    $('.pop_chart').html('<img height=25 width=25 src="/images/loading.gif">');
-    $('.area_chart').html('<img height=25 width=25 src="/images/loading.gif">');
-    $('.map_container').html('<img height=25 width=25 src="/images/loading.gif">');
+   // $('.map').html('<img height=25 width=25 src="/images/loading.gif">');
     
 }
 function getEE_ID(name) {
@@ -285,6 +294,7 @@ function getEE_ID(name) {
                 'ST_ymin(l.extent_4326) as miny, ' +
                 'ST_xmax(l.extent_4326) as maxx, ' +
                 'ST_ymax(l.extent_4326) as maxy, ' +
+                "(SELECT ROUND(SUM(ST_Area(geography(ST_Transform(the_geom_webmercator,4326))))/1000000) as area from get_tile(TEXT('iucn'),TEXT('range'),l.scientificname,null)) as area," +
                 'CASE when eol.good then eolthumbnailurl else null end as eolthumbnailurl, ' +
                 'CASE when eol.good then eolmediaurl else null end as eolmediaurl, ' +
                 'initcap(t.class) as _class, initcap(family) as family, initcap(_order) as _order ' +
@@ -335,7 +345,6 @@ function callBackend(response) {
     speciesPrefs = response;
     if (response.total_rows == 0) {
         $('.working').hide();
-        $('.info').hide();
         $('.image').empty();
         $('.visualization').html('There are no range maps or habitat preference data for this species.');
         return;
@@ -370,11 +379,8 @@ function callBackend(response) {
     if(response.rows[0].eolthumbnailurl!=null) {
         $('.image').empty();
         $('.image').append($('<img class="specimg" src="'+response.rows[0].eolmediaurl+'">'));
-        if($('.specimg').width()>$('.specimg').height()) {
-            $('.specimg').width(250);
-        } else {
-            $('.specimg').height(250);
-        }
+        $('.area').html('Expert range map area: ' + response.rows[0].area + ' km<sup>2</sup>');
+        
         
     } else {
          getImage();
@@ -392,23 +398,23 @@ function callBackend(response) {
     $('._order').html('Order: ' + response.rows[0]._order);
 
     if(elev[0] != '-1000' && elev[1] != '10000') {
-        $('.elev_range').slider("values",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
-        $('.elev_min').html('Elevation range from ' + elev[0] + 'm to ');
-        $('.elev_max').html(elev[1] + 'm');
+        $('.elev .range').slider("values",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
+        $('.elev .values').html('Elevation range: ' + elev[0] + 'm to ' + elev[1] + 'm');
     } else {
-        $('.elev_range').slider("values",[-500,8000]);
-        $('.elev_min').html('All elevations');
-        $('.elev_max').html('');
+        $('.elev .range').slider("values",[-500,8000]);
+        $('.elev .values').html('All elevations');
+        
     }
     
-    $('.suitable [class*=class_]').hide();
-    $('.unsuitable [class*=class_]').show();
+    $('.habitats [class*=class_]').removeClass('selected');
+   
     $.each(
         habitats,
         function(i) {
-            $('.suitable .class_'+habitats[i]).show();
-            
-            $('.unsuitable .class_'+habitats[i]).hide();
+            if(i>0&&i<6) {
+                i=1;
+            }
+            $('.habitats .class_'+habitats[i]).addClass('selected');
         }
     );
     $('.info').show('fade');
@@ -419,8 +425,7 @@ function callBackend(response) {
         host+'api/change?callback=?', 
         mod_params, 
         function(response) {
-            
-            chartHandler(response);
+            metricsHandler(response);
         },
         'jsonp'
     ).error(
@@ -435,14 +440,14 @@ function callBackend(response) {
             );
         }
     );
+    
     mod_params.get_area = 'false';
     $.getJSON(
         host+'api/change?callback=?', 
         mod_params, 
         function(response) {
-            map = new google.maps.Map($('.map_container')[0],map_options);
             map.fitBounds(bounds);
-            loadLayers(response);
+            mapHandler(response);
         },
         'jsonp'
     ).error(
@@ -451,169 +456,21 @@ function callBackend(response) {
                 host+'api/change?callback=?', 
                 mod_params, 
                 function(response) {
-                    loadLayers(response);
+                    mapHandler(response);
                 },
         'jsonp'
             );
         }
     );
 }
-function chartHandler(response) {
-    var pct_change = [response.area[0]],
-        vals = response.area.slice(1);
-        vals = vals.sort(
-        function(a,b){
-            if(a[0]<b[0]) {
-                return -1;
-            } else { 
-                return 1;
-            } 
-    });
-      
-    pct_change[0][0] = '% 2001 Area';    
-    chartData = response;
-    $('.working').hide();
-    
-    $('.msg').html('');
-    
-    $.each(
-        vals,
-        function(row) {
-            pct_change.push(
-            	[vals[row][0],Math.round(1000*(vals[row][1]/vals[0][1]))/10]
-        	);
-        }
-    );
-    
-    if ($('.mode').val() == 'pct') {
-        drawVisualization(
-            {'pop': response.pop, 'area': pct_change}, 
-            '% 2001 Habitat Area'
-        );
-    } else {
-        drawVisualization(response, 'Area (sq km)');
-    }
 
+function metricsHandler(response) {
 
 }
-function drawVisualization(data, title) {
-    // Create and populate the data table.
-    var pop_data, 
-        pop_chart, 
-        area_data = google.visualization.arrayToDataTable(data.area),
-        area_chart = new google.visualization.ScatterChart($('.area_chart')[0]);
-    
-    
-    if(data.pop[1][2]&&data.pop[2][2]>=0) {
-        pop_data =  google.visualization.arrayToDataTable(data.pop),
-        pop_chart = new google.visualization.ScatterChart($('.pop_chart')[0]);
-        $('pop_chart').empty();
-    }
-    
-    $('.modeContainer').show();
-    area_chart.draw(area_data, {
-        title: 'Suitable habitat area for {NAME} {COMMON}'
-            .replace(/{NAME}/g, scientificname)
-            .replace(/{COMMON}/g, commonnames),
-        width: 450,
-        height: 400,
-        //theme: "maximized",
-       
-        hAxis: {
-            title: "YEAR",
-            titleTextStyle: {
-                color: "green"
-            },
-            format: '####',
-            viewWindowMode: 'pretty'
-        },
-        series: {0:{ title: title,visibleInLegend: false}},
-        trendlines: {
-            0 : {
-                color: 'orange',
-                lineWidth: 10,
-                opacity: 0.2,
-                pointSize: 0,
-                selectable: false,
-                visibleInLegend: true
-            }
-        },
-        legend: {
-            position: 'top'
-        },
-        pointSize: 17,
-        
-    });
-    //chart.setSelection()
-    google.visualization.events.addListener(
-        area_chart, 'select', 
-        function() {selectHandler(area_chart, data)});
-        if(pop_chart && pop_data) {
-        pop_chart.draw(pop_data, {
-            title: 'Population within habitat.'
-                .replace(/{NAME}/g, scientificname)
-                .replace(/{COMMON}/g, commonnames),
-            width: 450,
-            height: 400,
-            //theme: "maximized",
-           
-            hAxis: {
-                title: "YEAR",
-                titleTextStyle: {
-                    color: "green"
-                },
-                format: '####',
-                viewWindowMode: 'pretty'
-            },
-            series: {0:{ visibleInLegend: false}, 1:{visibleInLegend: false}},
-            trendlines: {
-                0 : { color: 'blue',
-                    lineWidth: 10,
-                    opacity: 0.2,
-                    pointSize: 0,
-                    selectable: false,
-                    visibleInLegend: true},
-                1 : { color: 'blue',
-                    lineWidth: 10,
-                    opacity: 0.2,
-                    pointSize: 0,
-                    selectable: false,
-                    visibleInLegend: true}
-            },
-            legend: {
-                position: 'top'
-            },
-            pointSize: 17,
-            
-        });
-        //chart.setSelection()
-        google.visualization.events.addListener(
-            pop_chart, 'select', 
-            function() {
-                selectHandler(pop_chart, data);
-            });
-    }
-}
 
-function selectHandler(chart, data) {
-    try {
-        map.overlayMapTypes.setAt(
-            0,
-            modis_maptypes[
-                'modis_'+ data.area[chart.getSelection()[0].row][0]
-                ]
-        );
-    } catch (e) {
-        console.log(data, chart);
-    }
-        
-    //;
-}
+function mapHandler(modis_layers) {
 
-function loadLayers(modis_layers) {
-    
-    var 
-        cdb_url = "http://d3dvrpov25vfw0.cloudfront.net/" +
+    var cdb_url = "http://d3dvrpov25vfw0.cloudfront.net/" +
             "tiles/change_tool/{Z}/{X}/{Y}.png?sql=" +
             "SELECT * FROM get_tile('iucn','range','{name}',null)"
         .replace('{name}',scientificname),

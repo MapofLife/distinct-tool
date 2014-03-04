@@ -22,7 +22,7 @@ class BaseHandler(webapp2.RequestHandler):
 
 class ChangeTool(BaseHandler):
     def get(self):
-        self.render_template('forest-tool-template.html', {})
+        self.render_template('refine-template.html', {})
 
 application = webapp2.WSGIApplication(
          [('/', ChangeTool), ('/.*',ChangeTool)],

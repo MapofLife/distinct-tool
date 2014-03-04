@@ -1,0 +1,229 @@
+html{}
+
+.centered {
+    display: block;
+    text-align: left;
+    max-width:1143px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.header {
+    text-align: left;
+    max-width:1143px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.key {
+    float: right;
+    width: 300px;
+}
+.sci {
+    display: inline;
+    font-size:9pt;
+    font-style: italic;
+}
+.eng {
+    font-size:9pt;
+    display: inline;
+}
+.topright {
+    position:absolute;
+    top:5px;
+    right:9px;
+}
+.working {
+    width:25px;
+    height:25px;
+    float:right;
+}
+.modeContainer {
+    display:none;
+}
+.msg {
+    float:right;
+    max-width:480px;
+    overflow:ellipsis;
+    vertical-align: center;
+}
+.thumb {
+    float:left;
+    width: 50px;
+    height: 50px;
+}
+.image {
+    text-align: center;
+}
+
+.info {
+    font-size:10pt;
+    margin-top: 0.5em;
+    border-top: 0.2em solid gray;
+    padding-top: 0.5em;
+    
+}
+
+.habitats {
+    font-size: 0.9em
+}
+.habitats .selected {
+    background-image: linear-gradient(to bottom,#8cbf44 0,#7bae33 100%);
+}
+.common:first-line {
+    font-size: 22pt;
+    line-height:15pt;
+}
+.common {
+    font-size: 16pt;
+}
+.visualization {
+    text-align:center;
+    position: relative;
+}
+.sciname{
+    font-size:14pt;
+    font-style: italic;
+    
+}
+
+.tax {
+    padding: 0.1em 0 0.1em 0;
+}
+
+.specimg {
+    width:100%;
+    border-radius: 1em;
+}
+.image {
+    overflow: hidden;
+}
+.name {
+    padding: 0.1em 0 0.1em 0;
+}
+.legend {
+  display: inline-block;
+  margin-right: 5pt;
+  width:10px; 
+  height:10px;
+  border:0.5pt solid black;
+}
+.metr
+
+.rerun {
+    cursor: pointer;
+    cursor: hand;
+    float:left;
+    padding:4px;
+    text-decoration: underline;
+}
+
+.assess {
+    cursor: pointer;
+    cursor: hand;
+    float:left;
+    padding:4px;
+    text-decoration: underline;
+}
+
+
+.title {
+    float:right;
+    text-align:right;
+}
+.subtitle {
+    float:right
+}
+.search {
+    margin: 1em 0 1em 1em;
+    outline: none;
+    border-radius:0.5em;
+    border: 0.2em solid gray;
+}
+.searchHint {
+    margin: 1em 1em 1em 0 ;
+}
+.header {
+    background: #fff url(../images/header_background.png) no-repeat bottom center;
+}
+
+.footer {
+    display: block;
+    color: #fff;
+    background: #062d66 url(../images/footer_background.png) no-repeat left bottom;
+    height: 15em;
+    width: 100%;
+}
+
+.body {
+    font-family: "Cantarell","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+}
+.logo {
+    height:100px;
+    margin-right: 10px;
+}
+.map {
+    width: 100%;
+    height: 80%;
+    border-radius:1em;
+    border: 0.2em solid gray;
+    margin: 1em;
+    padding:1em;
+}
+.metrics {
+    clear:both;
+    border-top: 0.2em solid gray;
+    margin: 1em;
+    padding: 1em;
+    
+}
+.instructions {
+    padding: 1em;
+}
+.navigation {
+    display:block;
+    text-align: center;
+    background-color: #8cbf44;
+    width: 100%
+}
+.nav_buttons {
+    text-align: left;
+    color: #fff;
+    font-size:16;
+    font-weight: normal;
+    padding: 0.62em;
+    
+}
+.nav_button {
+    padding:0.3em;
+    border-radius: 0.3em;
+    margin-right:1.5em;
+    cursor: pointer;
+    cursor: hand;
+    
+    /*line-height: 2.4em;*/
+}
+.nav_button:hover {
+    background-color: #7bae33;
+}
+.nav_selected {
+    border-bottom: 0.3em solid gray;
+    background-color: #7bae33;
+    border-radius: 0.3em;
+}
+.range {
+    height:0.1em,;
+    margin: 0.3em;
+    padding-top: 0.1em;
+    padding-bottom: 0.1em;
+    outline: none;
+}
+
+.rereun {
+    display: none;
+    outline: none;
+}
+
+.range .ui-slider-handle {
+    outline: none;
+}
+[class*=class_] {cursor: pointer; cursor: hand; padding: 0.2em}

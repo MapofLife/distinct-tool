@@ -38,7 +38,7 @@ class ChangeAPI(webapp2.RequestHandler):
         self.mapid_results['call_ver']= self.call_ver
         
         logging.info('Firing requests for 2001 to 2013')
-        for i in range(2001,2013):
+        for i in range(2001,2002):
             year_url = self.url % (
                 urllib.urlencode(
                     dict(habitats=self.habitats, 

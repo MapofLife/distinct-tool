@@ -1,0 +1,187 @@
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+        <title>
+            Map of Life - Species Range Refinement
+        </title>
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" href="/css/refine.css" />
+        <link rel="icon" href="/images/favicon128.png" type="image/png">
+        <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script 
+            type="text/javascript" 
+            src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js">
+        </script>
+        <script src="http://underscorejs.org/underscore-min.js"></script>
+        <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+        <script src="js/jquery.ui.slider.rangegrab.js"></script>
+        <link rel="stylesheet" 
+            href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" 
+            href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="header col-md-12">
+                    <img src="images/MOL_full_logo.png" class="logo" />
+                    <div class="title">
+                       <h1>Species Range Refinement</h1>
+                       <h4>Powered by Map of Life and Google Earth Engine</h4>
+                    </div>
+                </div>
+            </div>          
+        </div>
+        <div class="navigation">
+            <div class="container">
+                <div class="row">
+                    <div class="nav_buttons col-md-12">
+                        <span class="nav_button nav_selected">
+                            Range Map Refinement
+                        </span>
+                        <span class="nav_button">
+                            Habitat Change Analysis
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="row">
+                        <div class="instructions">
+                            Species range maps are expert estimations of where a 
+                            species can potentially live. However the area within 
+                            a given range encompasses a wide variety of habitats, 
+                            and the actual area inhabited by the species may in 
+                            fact be much smaller. This tool allows expert range 
+                            maps to be refined by known species habitat and 
+                            elevation preferences.
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="info">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="name">
+                                        <div class="common">
+                                        </div>
+                                        <div class="sciname">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div class="tax">
+                                            <div class="_class">
+                                            </div>
+                                            <div class="_order">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button 
+                                            rel="tooltip"
+                                            title="Refresh using the selected elevation and habitat preferences."
+                                            type="button" 
+                                            class="btn btn-default btn-lg rerun">
+                                            <span class="glyphicon glyphicon-refresh">
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="elev">
+                                    <div class="values">
+                                        Elevation range: all
+                                    </div>
+                                    <div class="range">
+                                    </div>
+                                </div>
+                                <div class="forest">
+                                    <div class="values">
+                                        Forest coverage: any
+                                    </div>
+                                    <div class="range">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="image col-md-6">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row controls">
+                        <div class="col-md-12">
+                             <h5>Select habitats for this species</h5>
+                        </div>
+                        <div class="habitats col-md-6">
+                            <div class="list-group-item class_1">Forests</div>
+                            <div class="list-group-item class_6">Closed Shrublands</div>
+                            <div class="list-group-item class_7">Open Shrublands</div>
+                            <div class="list-group-item class_8">Woody Savannas</div>
+                            <div class="list-group-item class_9">Savannas</div>
+                            <div class="list-group-item class_10">Grasslands</div>
+                            <div class="list-group-item class_11">Permanent Wetlands</div>
+                        </div>
+                        <div class="habitats col-md-6">
+                            <div class="list-group-item class_12">Cropland</div>
+                            <div class="list-group-item class_13">Urban and Built-up</div>
+                            <div class="list-group-item class_14">Cropland/Natural Vegetation Mosaics</div>
+                            <div class="list-group-item class_15">Snow and Ice Barren</div>
+                            <div class="list-group-item class_16">Barren</div>
+                            <div class="list-group-item class_0">Water Bodies</div>
+                        </div>
+                    </div>
+                    <div class="metrics row">
+                        <div class="range_area">
+                            Expert range area: 123,567,890 km<sup>2</sup>
+                        </div>
+                        <div class="refined_area">
+                            Refined area: 12,345,678 km<sup>2</sup>
+                        </div>
+                        <div class="human_pop">
+                            Human population in range: 123,456,789
+                        </div>
+                        <div class="occ_range">
+                            Species occurrences recorded in range: 1,234
+                        </div>
+                        <div class="occ_out">
+                            Species occurrences recorded outside range: 12
+                        </div>
+                        <div class="occ_refined">
+                            Species occurrences recorded in refined area: 123
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="row" >
+                        <div class="col-md-6">
+                            <input type="text" 
+                                placeholder="Search by species name" 
+                                size=40 class="search" />
+                        </div>
+                        <div class="col-md-6">
+                            <div class="searchHint">
+                                <a href="javascript:getRandom()"> ... or click here for a random species.</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="map">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="footer_links">
+            </div>
+        </div>
+        <script type="text/javascript" src="/js/refine.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                $("[rel='tooltip']").tooltip();
+            });
+        </script>
+    </body>
+</html>

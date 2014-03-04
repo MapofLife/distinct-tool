@@ -61,12 +61,10 @@ class YearHandler(webapp2.RequestHandler):
             
             # just return Map ID's
             map = result.getMapId({
-                'palette': 'aec3d4,152106,225129,369b47,30eb5b,387242,6a2325,'\
-                        'c3aa69,b76031,d9903d,91af40,111149,cdb33b,cc0013,'\
-                        '33280d,d7cdcc,f7e084,6f6f6f',
+                'palette': '8cbf44',
                 'min':0,
                 'max': 17,
-                'opacity': 1
+                'opacity': 0.7
             })
             getTileUrl = 'https://earthengine.googleapis.com/'\
                 'map/%s/{Z}/{X}/{Y}?token=%s' % (
