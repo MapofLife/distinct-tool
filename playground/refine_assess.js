@@ -3,12 +3,17 @@
 centerMap(-112,40, 4);
 
 //SET VAR INPUT PARAMETERS
-var forestCoverLow = 0; //greater than this
-var forestCoverHigh = 100; //less than this
+var forestCoverLow = 25; //greater than this
+var forestCoverHigh = 75; //less than this
 var elevationLow = 1800; //greater than
 var elevationHigh = 20000; //less than
 
 var prefs = [0,1,2,3,4,5,6,7,8,9]; //use to select which habitat prefs.  this will be passed in by the user
+
+//0:water, 1:evergreen needleleaf forest, 2: evergreen broadleaf forest,3:deciduous needleleaf forest,
+//4:deciduous broadleaf forest, 5:mixed forest, 6:closed shrublands, 7: open shrublands, 8:woody savannas, 
+//9:savannas, 10:grasslands, 11:permanent wetlands, 12:croplands, 13:urban and built-up, 
+//14:cropland/natural vegetation mosiac, 15:snow and ice, 16: barren or sparsely vegetated
 
 //maps engine id's for the assests.  there should be a total of 12, only using 4 right now.
 var modis_binary = {
@@ -50,15 +55,43 @@ var forest = ee.Image('GME/images/04040405428907908306-09310201000644038383')
                 .divide(100); //need to divide by 100 then we get two digit %
 var elev = ee.Image('GME/images/04040405428907908306-08319720230328335274');
 var habitat = ee.Image(0); //initialize habitat image
+var modisForest = ee.Image(0); //initialize forest image
 
-//make the landcover layer by merging modis layers for each of the habitat preferences
+
+var pref,layer;
+var useForest=false;
+
+//we need to treat all forest layers (1-5) as a single layer, and this layer works differently in conjunction 
+//with the other landcover layers.  see below for rules.
 for(var i=0; i<prefs.length; i++) {
-  habitat = habitat.add(ee.Image('GME/images/' + modis_binary[prefs[i]]).mask(range));
+  pref = prefs[i];
+  layer = ee.Image('GME/images/' + modis_binary[pref]).mask(range);
+  
+  if(pref >= 1 && pref <= 5 ) {
+    modisForest = modisForest.add(layer);
+    useForest = true;
+  } else {
+    habitat = habitat.add(layer);
+  }
 }
 
-//this will need to change, if we consider % forest cover in a more complex way.  good enough for now though
-habitat = habitat.gte(1)//since we are just adding all the habitat layers, we might end up with pixels > 1
-            .where(forest.lt(forestCoverLow).or(forest.gt(forestCoverHigh)),0); //remove all pixels outside the bounds of forest cover
+///// habitat refinement rules:
+//for any forest layers, we intersect with the % forest cutoffs sent in by user
+//we ignore % forest cutoffs for any other landcover types
+//if the resulting layer has pixels that are not habitat, but it is in the % forest cutoffs, we consider this as habitat
+//finally, anything outside of the elevation range we consider not habitat
+//note that the user can only select % forest cutoffs if they have "forest" as a preference
+
+if(useForest) {
+  modisForest = modisForest
+    .where(forest.lt(forestCoverLow).or(forest.gt(forestCoverHigh)),0); 
+  //add the forest pixels to the habitat layer
+  //also add any pixels that are currently not habitat but have forest cover w/in user supplied cutoff
+  habitat = habitat.add(modisForest)
+              .where(habitat.eq(0).and(forest.gte(forestCoverLow).and(forest.lte(forestCoverHigh))),1);
+}
+
+habitat = habitat.gte(1);//since we are just adding all the habitat layers, we might end up with pixels > 1
 // don't know why but elevation layer is giving me errors right now
 //            .where(elev.lt(elevationLow).or(elev.gt(elevationHigh)),0); //remove all pixels outside the bound of elevation
 
@@ -66,14 +99,13 @@ habitat = habitat.gte(1)//since we are just adding all the habitat layers, we mi
 // 0 outside the original range, 
 // 1 in the expert range but outside refined range, and 
 // 2 in refined range
-//need to use the method below so that we can ensure there are no masked out value, which
-//messes up the reducer
+//need to use the method below so that we can ensure there are no masked out value, which messes up the reducer
 var allrange = ee.Image(0)
         .where(range.eq(1), 1)
         .where(habitat.eq(1), 2);
 
 //now we have the layer that has 1 for original range and 2 for refined range
-//use reduce regions with the buffered points to find the maxim pixel
+//use reduce regions with the buffered points to find the maximum pixel
 var pointsBufMax = allrange.reduceRegions(pointsBuf,ee.Reducer.max(),1000);
 
 // Count the results with a histogram.
@@ -84,14 +116,13 @@ print('Outside range: ' + hist.histogram.histogram[0]);
 print('Inside range but outside refined range: ' + hist.histogram.histogram[1]); 
 print('Inside refined range: ' + hist.histogram.histogram[2]); 
 
-//addToMap(elev,{palette:'FFFFFF,403BCC',min:0,max:10000},"Elevation");
-//addToMap(forest,{palette:'FCB360,065202',min:0,max:100},"% Forest Cover");
-
 // Filter results so we can draw them in separate layers.
 var outRange = pointsBufMax.filter(ee.Filter.eq('max',0));
 var inExpOutRef = pointsBufMax.filter(ee.Filter.eq('max',1));
 var inRef = pointsBufMax.filter(ee.Filter.eq('max',2));
 
+//addToMap(elev,{palette:'FFFFFF,403BCC',min:0,max:10000},"Elevation");
+//addToMap(forest,{palette:'FCB360,065202',min:0,max:100},"% Forest Cover");
 //addToMap(range, {opacity: 0.3, palette: 'FFFFFF,ff3366',min:0,max:1}, 'range');
 //addToMap(habitat, {palette:'FFFFFF,036E52',min:0,max:1},"habitat");
 addToMap(allrange.mask(range), {opacity: 0.8, palette:'FFFFFF,F5DFC1,73AAF5',min:0,max:2},"all range");
