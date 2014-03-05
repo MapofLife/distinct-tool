@@ -32,6 +32,9 @@ handlers:
 
 - url: /api/assess
   script: assess_handler.application
+  
+- url: /api/refine
+  script: refine_handler.application
  
 - url: /(.*\.(gif|png|jpg))
   static_files: static/\1

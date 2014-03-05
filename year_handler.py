@@ -54,7 +54,7 @@ class YearHandler(webapp2.RequestHandler):
                 cover.eq(int(mod51pref)).And(elev.gt(min)).And(elev.lt(max)),
                 int(mod51pref)
             )
-
+        result.where
         result = output.mask(output)
 
         if(get_area == 'false'):
