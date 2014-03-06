@@ -244,6 +244,8 @@ function init() {
      
     if(getURLParameter("name")!='null') {
         getEE_ID(getURLParameter("name"));
+    } else {
+        getRandom();
     }
 }
 function getEE_ID(name) {
@@ -311,6 +313,7 @@ function callBackend(response) {
     $('.rerun').hide();
     
     map.overlayMapTypes.clear();
+    $('.metric').empty();
     
     speciesPrefs = response;
     if (response.total_rows == 0) {
@@ -459,16 +462,18 @@ function mapHandler(map_layers) {
     $.each(
         map_layers,
         function(l) {
-            maptype = new google.maps.ImageMapType({
-                getTileUrl: function(coord, zoom) {
-                    return map_layers[l]
-                        .replace(/{X}/g, coord.x)
-                        .replace(/{Y}/g, coord.y)
-                        .replace(/{Z}/g, zoom);
-                },
-                tileSize: new google.maps.Size(256, 256)
-            });
-            map.overlayMapTypes.push(maptype);
+            if(map_layers[l]) {
+                maptype = new google.maps.ImageMapType({
+                    getTileUrl: function(coord, zoom) {
+                        return map_layers[l]
+                            .replace(/{X}/g, coord.x)
+                            .replace(/{Y}/g, coord.y)
+                            .replace(/{Z}/g, zoom);
+                    },
+                    tileSize: new google.maps.Size(256, 256)
+                });
+                map.overlayMapTypes.push(maptype);
+        }
         }
     );
     

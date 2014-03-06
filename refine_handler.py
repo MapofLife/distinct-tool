@@ -124,29 +124,46 @@ class RefineHandler(webapp2.RequestHandler):
                 
         habitat = habitat.mask(habitat)
         
-        pointsBuf = self.getBufferedPoints(sciname)
+        pointJson = self.getRandomPoints(sciname)
+        pointFc = self.getPointJSONToFC(pointJson)
+        pointsBuf = self.getBufferedPoints(pointFc)
         
         if pointsBuf:
-            allrange = ee.Image(0).where(range.gt(0),1).where(habitat.eq(1),2)
+            allrange = ee.Image(0).where(range.eq(1),1).where(habitat.eq(1),2)
             
             pointsBufMax = allrange.reduceRegions(
                 pointsBuf,
                 ee.Reducer.max(),
                 1000) 
             
+            points_buffered_map = pointsBufMax.getMapId(
+               {
+                    'palette':'9C031D,FACB0F,016B08',
+                    'min':0,
+                    'max':2
+                }
+            )
+            
             hist =  pointsBufMax.reduceColumns(
                 ee.Reducer.histogram(),
                 ['max']).getInfo()
-                
-            logging.info(json.dumps(hist))
+             
+            #out_pts = pointsBufMax.filter(ee.Filter.eq('max',0))
+            #range_pts = pointsBufMax.filter(ee.Filter.eq('max',1))
+            #habitat_pts = pointsBufMax.filter(ee.Filter.eq('max',2))
             
-            out_pts = pointsBufMax.filter(ee.Filter.eq('max',0))
-            range_pts = pointsBufMax.filter(ee.Filter.eq('max',1))
-            habitat_pts = pointsBufMax.filter(ee.Filter.eq('max',2))
             
-            #out_pts_map = out_pts.getMapId({'palette':'9C031D'})
-            #range_pts_map = range_pts.getMapId({'palette':'FACB0F'})
-            #habitat_pts_map = habitat_pts.getMapId({'palette':'016B08'})
+            points_buffered_map = pointsBufMax.getMapId(
+               {
+                    'palette':'9C031D,FACB0F,016B08',
+                    'min':0,
+                    'max':2
+                }
+            )
+            #out_pts_map = out_pts.draw('9C031D',3,0).getMapId()
+            #range_pts_map = range_pts.draw('FACB0F',3,0).getMapId()
+            #habitat_pts_map = habitat_pts.draw('016B08',3,0).getMapId()
+            points_map = pointFc.getMapId()
             
             if len(hist["histogram"]["histogram"]) >= 3:
                 habitat_pts_ct = hist["histogram"]["histogram"][2]
@@ -170,6 +187,11 @@ class RefineHandler(webapp2.RequestHandler):
             #habitat_pts_tileurl = EE_TILE_URL % (
             #         habitat_pts_map['mapid'], habitat_pts_map['token'])
             
+            points_buffered_tileurl = EE_TILE_URL % (
+                     points_buffered_map['mapid'], points_buffered_map['token'])
+            points_tileurl = EE_TILE_URL % (
+                     points_map['mapid'], points_map['token'])
+            
         else:
             habitat_pts_ct = None
             range_pts_ct = None   
@@ -177,6 +199,8 @@ class RefineHandler(webapp2.RequestHandler):
             out_pts_tileurl = None
             range_pts_tileurl = None
             habitat_pts_tileurl = None
+            points_tileurl = None
+            points_buffered_tileurl = None
         
         area = ee.call("Image.pixelArea")
         sum_reducer = ee.call("Reducer.sum")
@@ -215,10 +239,12 @@ class RefineHandler(webapp2.RequestHandler):
         #assemble the response object
         response = {
             'maps' : [
-                habitat_tileurl
+                habitat_tileurl,
                 #range_pts_tileurl,
                 #habitat_pts_tileurl,
-                #out_pts_tileurl
+                #out_pts_tileurl,
+                points_tileurl,
+                points_buffered_tileurl
             ],
             'area' : {
                 'range' : range_area,
@@ -237,9 +263,7 @@ class RefineHandler(webapp2.RequestHandler):
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(json.dumps(response))
 
-
-    def getBufferedPoints(self,sciname):
-        pointjson = self.getRandomPoints(sciname)
+    def getPointJSONToFC(self,pointjson):
         pjson = json.loads(pointjson)
             
         logging.info(json.dumps(pjson))
@@ -258,8 +282,13 @@ class RefineHandler(webapp2.RequestHandler):
             
             #Create a FeatureCollection from that array 
             pts_fc = ee.FeatureCollection(pts)
-            pointsBuf = pts_fc.map(lambda f: f.buffer(10000))
-            return pointsBuf
+            return pts_fc
+        
+    def getBufferedPoints(self,pointFc):
+        if pointFc:
+            return pointFc.map(lambda f: f.buffer(10000))
+        else:
+            return None
                 
 application = webapp2.WSGIApplication(
     [ ('/refine', RefineHandler)], debug=True)
