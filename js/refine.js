@@ -231,9 +231,9 @@ function init() {
       $('.rerun').click(
           function() {
               speciesPrefs.rows[0].modis_habitats = _.map(
-                  $('.habitats [class*=class_] .selected'),
+                  $('.habitats .selected'),
                   function(elem,index) {
-                    return $(elem).attr("class").replace("class_","");
+                    return parseInt($(elem).attr("class").replace("class_","").replace("list-group-item","").replace("selected",""));
                   }
               ).join(',');
               speciesPrefs.rows[0].mine = $('.elev .range').slider('values',0);
@@ -241,42 +241,10 @@ function init() {
               callBackend(speciesPrefs);     
           }
       );
-      
-      $('.assess').click(doAssessment);
-
-      $('.mode').change(
-          function() {
-              if(chartData.area.length > 0) {
-                  chartHandler(chartData);
-              }
-          }
-      );
+     
     if(getURLParameter("name")!='null') {
         getEE_ID(getURLParameter("name"));
-    } else {
-        $('.working').hide();
-        clearCharts();
     }
-}
-function doAssessment () {
-    mod_params["mode"]= "assess";
-    mod_params["sciname"]= scientificname;
-    mod_params["call_ver"]= latest;
-       
-        $.getJSON(
-            '/api/assess',
-            mod_params,
-            function(response) {
-                alert(response.toString());
-            }
-        );
-}
-function clearCharts() {
-    
-}
-function showLoaders() {
-   // $('.map').html('<img height=25 width=25 src="/images/loading.gif">');
-    
 }
 function getEE_ID(name) {
     var sql = '' + 
@@ -321,8 +289,6 @@ function getEE_ID(name) {
             getURLParameter("source") : 'iucn',
          params = {q : sql.replace(/{TERM}/g,term).replace(/{SOURCE}/g,source)};
          
-    clearCharts();
-    showLoaders();
     chartData = [];
     
     $.getJSON(
@@ -341,41 +307,46 @@ function getEE_ID(name) {
 function callBackend(response) {
     var bounds, habitats;
     latest++; 
+    
     $('.rerun').hide();
+    
+    map.overlayMapTypes.clear();
+    
     speciesPrefs = response;
     if (response.total_rows == 0) {
-        $('.working').hide();
-        $('.image').empty();
-        $('.visualization').html('There are no range maps or habitat preference data for this species.');
+         $('.image').empty();
         return;
-    } else {
-        $('.msg').html('');
-    }
+    } 
     
-
-    $('.info').hide();
     bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(response.rows[0].miny, response.rows[0].minx),
         new google.maps.LatLng(response.rows[0].maxy, response.rows[0].maxx)
     );
-            habitats = response.rows[0].modis_habitats.split(','),
-            elev = [response.rows[0].mine, response.rows[0].maxe],
-            ee_id = response.rows[0].ee_id;
-            
-        mod_params = {
-            habitats : response.rows[0].modis_habitats,
-            elevation : elev.join(','),
-            ee_id : ee_id,
-            mod_ver: 5.1, //$('.mod_ver').val(),
-            minx: response.rows[0].minx,
-            miny: response.rows[0].miny,
-            maxx: response.rows[0].maxx,
-            maxy: response.rows[0].maxy,
-            get_area: true,
-            call_ver: latest
-        };
+    
+    map.fitBounds(bounds);
+    
+    habitats = response.rows[0].modis_habitats.split(',');
+    elev = [response.rows[0].mine, response.rows[0].maxe];
+    ee_id = response.rows[0].ee_id;
     scientificname = response.rows[0].scientificname;
     commonnames = ' (' + response.rows[0].names + ')';
+    
+    mod_params = {
+        habitats : response.rows[0].modis_habitats,
+        elevation : elev.join(','),
+        ee_id : ee_id,
+        mod_ver: 5.1, //$('.mod_ver').val(),
+        minx: response.rows[0].minx,
+        miny: response.rows[0].miny,
+        maxx: response.rows[0].maxx,
+        maxy: response.rows[0].maxy,
+        minf: 25,
+        maxf: 75,
+        sciname: response.rows[0].scientificname,
+        call_ver: latest
+    };
+    
+    
     if(response.rows[0].eolthumbnailurl!=null) {
         $('.image').empty();
         $('.image').append($('<img class="specimg" src="'+response.rows[0].eolmediaurl+'">'));
@@ -411,64 +382,63 @@ function callBackend(response) {
     $.each(
         habitats,
         function(i) {
-            if(i>0&&i<6) {
-                i=1;
+            var h;
+            if(parseInt(habitats[i])>0&&parseInt(habitats[i])<6) {
+                h=1;
+            } else {
+                h=parseInt(habitats[i]);
             }
-            $('.habitats .class_'+habitats[i]).addClass('selected');
+            $('.habitats .class_'+h).addClass('selected');
         }
     );
     $('.info').show('fade');
     
-    mod_params.get_area = 'true';
-    
+    mod_params.minf = 25;
+    mod_params.maxf = 75;
+
     $.getJSON(
-        host+'api/change?callback=?', 
+        host+'refine', 
         mod_params, 
         function(response) {
-            metricsHandler(response);
+            refineHandler(response);
         },
         'jsonp'
     ).error(
         function() {
             $.getJSON(
-                host+'api/change?/callback=?',
+                host+'refine',
                 mod_params,
                 function(response) {
-                    chartHandler(response);
+                    refineHandler(response);
                 },
         'jsonp'
-            );
-        }
-    );
-    
-    mod_params.get_area = 'false';
-    $.getJSON(
-        host+'api/change?callback=?', 
-        mod_params, 
-        function(response) {
-            map.fitBounds(bounds);
-            mapHandler(response);
-        },
-        'jsonp'
-    ).error(
-        function() {
-            $.getJSON(
-                host+'api/change?callback=?', 
-                mod_params, 
-                function(response) {
-                    mapHandler(response);
-                },
-        'jsonp'
+            ).error(
+                function() {
+                    $.getJSON(
+                        host+'refine',
+                        mod_params,
+                        function(response) {
+                            refineHandler(response);
+                        },
+                'jsonp'
+                    );
+                }
             );
         }
     );
 }
 
-function metricsHandler(response) {
+function refineHandler(response) {
+    mapHandler(response.maps);
+    $('.occ_refined').text(addCommas(response.points.habitat));
+    $('.occ_range').text(addCommas(response.points.range));
+    $('.occ_out').text(addCommas(response.points.out));
+    $('.refined_area').html(addCommas(response.area.habitat)+' km<sup>2</sup>');
+    $('.range_area').html(addCommas(response.area.range)+' km<sup>2</sup>');
 
 }
 
-function mapHandler(modis_layers) {
+function mapHandler(map_layers) {
 
     var cdb_url = "http://d3dvrpov25vfw0.cloudfront.net/" +
             "tiles/change_tool/{Z}/{X}/{Y}.png?sql=" +
@@ -483,22 +453,41 @@ function mapHandler(modis_layers) {
                 },
                 tileSize: new google.maps.Size(256, 256)
             });
-        
+            
+    map.overlayMapTypes.clear();
+    map.overlayMapTypes.push(cdb_maptype);
     $.each(
-        modis_layers,
-        function(year) {
-            modis_maptypes[year] = new google.maps.ImageMapType({
+        map_layers,
+        function(l) {
+            maptype = new google.maps.ImageMapType({
                 getTileUrl: function(coord, zoom) {
-                    return modis_layers[year]
+                    return map_layers[l]
                         .replace(/{X}/g, coord.x)
                         .replace(/{Y}/g, coord.y)
                         .replace(/{Z}/g, zoom);
                 },
                 tileSize: new google.maps.Size(256, 256)
             });
+            map.overlayMapTypes.push(maptype);
         }
     );
     
-    map.overlayMapTypes.setAt(0,modis_maptypes['modis_2001']);
-    map.overlayMapTypes.setAt(1,cdb_maptype);
+    
+    
 }
+
+function addCommas(val){
+    if (val == null) {
+        return '';
+    }
+    while (/(\d+)(\d{3})/.test(val.toString())){
+      val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
+    }
+    return val;
+  }
+  
+$(function(){
+    $('a, button').click(function() {
+        $(this).toggleClass('active');
+    });
+});

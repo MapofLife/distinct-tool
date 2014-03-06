@@ -23,17 +23,8 @@ handlers:
 
 - url: /cache/.*
   script: cache_handler.application
-  
-- url: /api/change
-  script: change_handler.application
-      
-- url: /api/year
-  script: year_handler.application
-
-- url: /api/assess
-  script: assess_handler.application
-  
-- url: /api/refine
+ 
+- url: /refine
   script: refine_handler.application
  
 - url: /(.*\.(gif|png|jpg))
