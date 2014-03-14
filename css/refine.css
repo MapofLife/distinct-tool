@@ -87,16 +87,6 @@ html{}
   height:10px;
   border:0.5pt solid black;
 }
-.metr
-
-.rerun {
-    display: none;
-    cursor: pointer;
-    cursor: hand;
-    float:left;
-    padding:4px;
-    text-decoration: underline;
-}
 
 .assess {
     cursor: pointer;
@@ -111,7 +101,7 @@ html{}
     cursor: hand;
 }
 .search {
-    padding: 1em 2em;
+    padding: 1em 0.5em;
     outline: none;
     
 }
@@ -245,14 +235,14 @@ html{}
 .twitter-typeahead {
     width: 100%;
 }
-.random {
-  width: 100%;
+.top_button {
   font-size: 1em;
   -webkit-border-radius: 0.8em;
      -moz-border-radius: 0.8em;
           border-radius: 0.8em;
   outline: none;
 }
+
 .typeahead,
 .tt-query,
 .tt-hint {
