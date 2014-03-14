@@ -258,7 +258,7 @@ function getEE_ID(name) {
                     'm.modisprefs '+
                 'ELSE ' +
                   ' e.habitatprefs end as modis_habitats, ' +
-                "CASE WHEN e.finalmin is null OR e.finalmin = 'DD' then '-1000' else e.finalmin end as mine, " +
+                "CASE WHEN e.finalmin is null OR e.finalmin = 'DD' OR e.finalmin = '0' then '-1000' else e.finalmin end as mine, " +
                 "CASE WHEN e.finalmax is null OR e.finalmax = 'DD' then '10000' else e.finalmax end as maxe, " +
                 'ee.ee_id as ee_id, ' +
                 'CONCAT(n.v,\'\') as names, ' +
