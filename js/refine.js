@@ -66,29 +66,20 @@ var scientificname = getURLParameter("name"),
                     
 google.setOnLoadCallback(init);
 
-$.ui.autocomplete.prototype._renderItem = function (ul, item) {
-
-    item.label = item.label.replace(
-        new RegExp("(?![^&;]+;)(?!<[^<>]*)(" +
-           $.ui.autocomplete.escapeRegex(this.term) +
-           ")(?![^<>]*>)(?![^&;]+;)", "gi"),
-        "<strong>$1</strong>"
-    );
-    return $("<li></li>")
-        .data("item.autocomplete", item)
-        .append("<a>" + item.label + "</a>")
-        .appendTo(ul);
-};
-
 function getImage() {
     $.getJSON(
-        'https://ajax.googleapis.com/ajax/services/search/images?v=1.0&q=' +
-            scientificname +'&callback=?',
+        'https://ajax.googleapis.com/ajax/services/search/images?' +
+        'v=1.0&q={0}&callback=?'.format(scientificname),
         function(response) {
-            var src = response.responseData.results[0].url;
-            $('.image').empty();
-            $('.image').append($('<img class="specimg" src="'+src+'">'));
-            
+            try {
+                var src = response.responseData.results[0].url;
+                $('.image').empty();
+                $('.image').append(
+                    $('<img class="specimg" src="{0}">'.format(src)));
+            } catch(e) {
+                console.log('Bad image.');
+                console.log(response);
+            }
         },
         'jsonp'
     );
@@ -102,82 +93,72 @@ function getRandom() {
     $.getJSON(
         'http://mol.cartodb.com/api/v1/sql',
         {
-            q: 'SELECT binomial FROM modis_prefs_join m join ee_assets ee on m.binomial = ee.scientificname  limit 1 offset 33834*RANDOM()'
+            q: 'SELECT binomial ' +
+               'FROM modis_prefs_join m ' +
+               'JOIN ee_assets ee ON m.binomial = ee.scientificname ' +
+               'LIMIT 1 OFFSET 33834*RANDOM()' 
+               //33834 is the number of species we have to choose from
         },
         function (result) {
             //$('.search').val(getEE_ID(result.rows[0].binomial));
+            $('.search .typeahead').val(result.rows[0].binomial);
             getEE_ID(result.rows[0].binomial);
         }
     );
 }
 function init() {
-        $('.search').keypress(function(e) {
-            if(e.which == 13) {
-                getEE_ID($(this).val());
-                setTimeout(2000,"$('.search').autocomplete('close');");
-            }
-        });
-        
         //Set up autocomplete
-        $('.search').autocomplete({
-            minLength: 3,
-            source: function(request, response) {
-                $.getJSON(
-                    'http://mol.cartodb.com/api/v1/sql?q=' +
-                    'SELECT n, v FROM ac_mar_8_2013 ac ' +
-                    ' LEFT JOIN elevandhabitat e ' +
+        var species = new Bloodhound({
+                datumTokenizer: function (d) {
+                    return Bloodhound.tokenizers.whitespace(d.value);
+                },
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                limit: 100,
+                remote: {
+                    url: 'http://mol.cartodb.com/api/v1/sql?q=' +
+                    'SELECT n, v FROM ac ' +
+                    'LEFT JOIN elevandhabitat e ' +
                     'ON ac.n = e.scientific ' + 
-                    ' LEFT JOIN modis_prefs_join m ' +
-                    ' ON ac.n = m.binomial ' + 
-                    "where (m.modisprefs is not null OR e.habitatprefs is not null) AND (n~*'\\m{TERM}' OR v~*'\\m{TERM}')"
-                        .replace(/{TERM}/g, request.term),
-                    function (json) {
-                        var names = [],scinames=[];
-                        $.each (
-                            json.rows,
-                            function(row) {
-                                var sci, eng;
-                                if(json.rows[row].n != undefined){
-                                    sci = $.trim(json.rows[row].n);
-                                    eng = (json.rows[row].v == null ||
-                                        json.rows[row].v == '') ?
-                                            '' :
-                                            ', ' +
-                                                json.rows[row].v.replace(
-                                                    /'S/g, "'s"
-                                                
-                                            );
-                                    names.push({
-                                        label:'<div class="sci">'+sci+'</div>' +
-                                              '<div class="eng">'+eng +'</div>',
-                                        value:sci
-                                    });
-                                    scinames.push(sci);
-                               }
-                           }
-                        );
-                        response(names);
-                        
-                     },
-                     'json'
-                );
-            },
-       
-            select: function(event, ui) {
-                getEE_ID(ui.item.value);
-            },
-            close: function(event,ui) {
-
-            },
-            search: function(event, ui) {
-                //getEE_ID(ui.item.value);
-                
-            },
-            open: function(event, ui) {
-                
-                
+                    'LEFT JOIN modis_prefs_join m ' +
+                    'ON ac.n = m.binomial ' + 
+                    'WHERE ' +
+                    '(m.modisprefs is not null OR ' + 
+                    'e.habitatprefs is not null) ' +
+                    "AND (n || ' ' || v) ~* '\\m%QUERY' LIMIT 300",
+                    filter: function (response) {
+                        return response.rows; 
+                    }
+                }
+            });
+        species.initialize();
+        
+        $('.search .typeahead').typeahead({
+            minLength: 1,
+            hint: true,
+            highlight: true,
+            items: 'all',
+            scrollHeight: 300
+        },{
+            displayKey: 'n',
+            source: species.ttAdapter(),
+            templates: {
+                empty: [
+                  '<div class="empty-message">',
+                    'No species found. ',
+                  '</div>'
+                ].join('\n'),
+                suggestion: Handlebars.compile(
+                    '<div class="species">'+
+                        '<div class="n">{{n}}</div>'+
+                        '<div class="v">{{v}}</div>'+
+                    '</div>')
             }
-      });
+        }).on(
+            'typeahead:selected',
+            function(evt,item) {
+                getEE_ID(item.n);
+            }
+        );
       
       $('.habitats [class*=class_]').click(
           function() {
@@ -191,54 +172,75 @@ function init() {
       );
 
       
-      $('.elev .range').slider(
-          {
-              range: true,
-              min: -500,
-              max: 8000,
-              values: [ -500, 8000 ],
-              step: 100,
-              rangeDrag: true, 
-              slide: function( event, ui ) {
+      $('.elev .range').slider({
+          range: true,
+          min: -500,
+          max: 8000,
+          tooltip: 'hide',
+          handle: 'square',
+          value: [-500, 8000],
+          step: 100
+       }).on(
+          'slide',
+          function(event) {
                 $('.elev .values').html(
-                    'Elevation range: ' + 
-                    ui.values[ 0 ]+ 
+                    'Elevation: ' + 
+                    event.value[0]+ 
                     'm to ' +
-                    ui.values[ 1 ] + 'm');
+                    event.value[1] + 'm');
                 $('.rerun').show();
               }
-        }
+          
       );
       $('.forest .range').slider(
           {
               range: true,
               min: 0,
               max: 100,
-              step: 5,
-              values: [0, 100 ],
-              rangeDrag: true, 
-              slide: function( event, ui ) {
+              tooltip: 'hide',
+              handle: 'square',
+              value: [0, 100],
+              step: 5 
+           }
+      ).on('slide', function(event) {
                 $('.forest .values').html(
-                    'Forest coverage: ' + 
-                    ui.values[ 0 ]+ 
-                    '% to ' +
-                    ui.values[ 1 ] + '%');
+                    'Forest&nbsp;coverage:&nbsp;' + 
+                    event.value[0]+ 
+                    '%&nbsp;to&nbsp;' +
+                    event.value[1] + '%');
                 $('.rerun').show();
               }
-        }
+          
       );
       
       $('.rerun').click(
           function() {
-              speciesPrefs.rows[0].modis_habitats = _.map(
+              speciesPrefs.rows[0].modis_habitats = $.map(
                   $('.habitats .selected'),
                   function(elem,index) {
-                    return parseInt($(elem).attr("class").replace("class_","").replace("list-group-item","").replace("selected",""));
+                    return parseInt($(elem)
+                        .attr("class")
+                        .replace("class_","")
+                        .replace("list-group-item","")
+                        .replace("selected",""));
                   }
               ).join(',');
-              speciesPrefs.rows[0].mine = $('.elev .range').slider('values',0);
-              speciesPrefs.rows[0].maxe = $('.elev .range').slider('values',1);
-              callBackend(speciesPrefs);     
+              try{speciesPrefs.rows[0].mine = $('.elev .range').data('value')[0];}
+              catch(e) {speciesPrefs.rows[0].mine =-500;}
+              try{speciesPrefs.rows[0].maxe = $('.elev .range').data('value')[1];}
+              catch(e) {speciesPrefs.rows[0].maxe =8000;}
+              try{speciesPrefs.rows[0].minf = $('.forest .range').data('value')[0];}
+              catch(e) {speciesPrefs.rows[0].minf = 0;}
+              try{speciesPrefs.rows[0].maxf = $('.forest .range').data('value')[1];}
+              catch(e) {speciesPrefs.rows[0].maxf =100;}
+              callBackend(speciesPrefs);
+              $(this).removeClass('active');
+          }
+      );
+      $('.random').click(
+          function() {
+              getRandom();
+              $(this).removeClass('active');
           }
       );
      
@@ -264,6 +266,8 @@ function getEE_ID(name) {
                 'ST_ymin(l.extent_4326) as miny, ' +
                 'ST_xmax(l.extent_4326) as maxx, ' +
                 'ST_ymax(l.extent_4326) as maxy, ' +
+                '0 as minf, ' +
+                '100 as maxf, ' +
                 "(SELECT ROUND(SUM(ST_Area(geography(ST_Transform(the_geom_webmercator,4326))))/1000000) as area from get_tile(TEXT('iucn'),TEXT('range'),l.scientificname,null)) as area," +
                 'CASE when eol.good then eolthumbnailurl else null end as eolthumbnailurl, ' +
                 'CASE when eol.good then eolmediaurl else null end as eolmediaurl, ' +
@@ -310,7 +314,7 @@ function callBackend(response) {
     var bounds, habitats;
     latest++; 
     
-    $('.rerun').hide();
+    $('.rerun .glyphicon').addClass('spin');
     
     map.overlayMapTypes.clear();
     $('.metric').empty();
@@ -343,8 +347,8 @@ function callBackend(response) {
         miny: response.rows[0].miny,
         maxx: response.rows[0].maxx,
         maxy: response.rows[0].maxy,
-        minf: 25,
-        maxf: 75,
+        minf: response.rows[0].minf,
+        maxf: response.rows[0].maxf,
         sciname: response.rows[0].scientificname,
         call_ver: latest
     };
@@ -370,13 +374,29 @@ function callBackend(response) {
     
     $('.family').html('Family: ' + response.rows[0].family);
     $('._order').html('Order: ' + response.rows[0]._order);
-
+    try{
+        $('.forest .range').slider("setValue",[response.rows[0].minf,response.rows[0].maxf]);
+    } catch(e) {
+        $('.forest .range').slider("setValue",[0,100]);
+    }
+    
     if(elev[0] != '-1000' && elev[1] != '10000') {
-        $('.elev .range').slider("values",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
-        $('.elev .values').html('Elevation range: ' + elev[0] + 'm to ' + elev[1] + 'm');
+        $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
+        $('.elev .values').html(
+            'Elevation:&nbsp;' + elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
-        $('.elev .range').slider("values",[-500,8000]);
-        $('.elev .values').html('All elevations');
+        $('.elev .range').slider("setValue",[-500,8000]);
+        $('.elev .values').html('Elevation: any');
+        
+    }
+    
+    if(elev[0] != '-1000' && elev[1] != '10000') {
+        $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
+        $('.elev .values').html(
+            'Elevation:&nbsp;' + elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
+    } else {
+        $('.elev .range').slider("setValue",[-500,8000]);
+        $('.elev .values').html('Elevation: any');
         
     }
     
@@ -396,9 +416,7 @@ function callBackend(response) {
     );
     $('.info').show('fade');
     
-    mod_params.minf = 25;
-    mod_params.maxf = 75;
-
+   
     $.getJSON(
         host+'refine', 
         mod_params, 
@@ -424,6 +442,11 @@ function callBackend(response) {
                             refineHandler(response);
                         },
                 'jsonp'
+                    ).error(
+                        function(response) {
+                            $('.rerun .glyphicon').removeClass('spin');
+                            $('#errModal').modal();
+                        }
                     );
                 }
             );
@@ -432,6 +455,8 @@ function callBackend(response) {
 }
 
 function refineHandler(response) {
+    $('.rerun .glyphicon').removeClass('spin');
+    
     mapHandler(response.maps);
     $('.occ_refined').text(addCommas(response.points.habitat));
     $('.occ_range').text(addCommas(response.points.range));
@@ -496,3 +521,26 @@ $(function(){
         $(this).toggleClass('active');
     });
 });
+/**
+ * https://gist.github.com/1049426
+ * 
+ * Usage: 
+ * 
+ *   "{0} is a {1}".format("Tim", "programmer");
+ * 
+ */
+String.prototype.format = function(i, safe, arg) {
+  function format() {
+      var str = this, 
+          len = arguments.length+1;
+      
+      for (i=0; i < len; arg = arguments[i++]) {
+          safe = typeof arg === 'object' ? JSON.stringify(arg) : arg;
+          str = str.replace(RegExp('\\{'+(i-1)+'\\}', 'g'), safe);
+      }
+      return str;
+  }
+  format.native = String.prototype.format;
+  return format;
+}();
+

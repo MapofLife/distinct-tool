@@ -20,12 +20,14 @@ class BaseHandler(webapp2.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "html", f)
         self.response.out.write(open(path, 'r').read())
 
-class ChangeTool(BaseHandler):
+class RefineTool(BaseHandler):
     def get(self):
+        self.render_template('refine-template.html', {})
+    def post(self):
         self.render_template('refine-template.html', {})
 
 application = webapp2.WSGIApplication(
-         [('/', ChangeTool), ('/.*',ChangeTool)],
+         [('/', RefineTool), ('/.*',RefineTool)],
          debug=True)
 
 def main():

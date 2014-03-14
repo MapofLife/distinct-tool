@@ -6,30 +6,30 @@
         <title>
             Map of Life - Species Range Refinement
         </title>
-        <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+        <link rel="stylesheet" 
+            href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/slider.css" />
         <link rel="stylesheet" href="/css/refine.css" />
         <link rel="icon" href="/images/favicon128.png" type="image/png">
         <script type="text/javascript" src="http://www.google.com/jsapi"></script>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
         <script 
             type="text/javascript" 
-            src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js">
+            src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
         </script>
-        <script src="http://underscorejs.org/underscore-min.js"></script>
-        <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-        <script src="js/jquery.ui.slider.rangegrab.js"></script>
-        <link rel="stylesheet" 
-            href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-        <link rel="stylesheet" 
-            href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/bootstrap-slider.js"></script>
+        <script type="text/javascript" src="js/typeahead.bundle.js"></script>
+        <script type="text/javascript" src="js/handlebars.js"></script>
     </head>
     <body>
         <div class="container">
             <div class="row">
                 <div class="header col-md-12">
-                    <img src="images/MOL_full_logo.png" class="logo" />
-                    <div class="title">
+                    <div class="col-md-6">
+                        <img src="images/MOL_full_logo.png" class="logo" />
+                    </div>
+                    <div class="col-md-6">
                        <h1>Species Range Refinement</h1>
                        <h4>Powered by Map of Life and Google Earth Engine</h4>
                     </div>
@@ -83,28 +83,14 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <button 
+                                        <a 
                                             rel="tooltip"
                                             title="Refresh using the selected elevation and habitat preferences."
                                             type="button" 
                                             class="btn btn-default btn-lg rerun">
                                             <span class="glyphicon glyphicon-refresh">
                                             </span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="elev">
-                                    <div class="values">
-                                        Elevation range: all
-                                    </div>
-                                    <div class="range">
-                                    </div>
-                                </div>
-                                <div class="forest">
-                                    <div class="values">
-                                        Forest coverage: any
-                                    </div>
-                                    <div class="range">
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -112,26 +98,73 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row controls">
-                        <div class="col-md-12">
-                             <h5>Select habitats for this species</h5>
-                        </div>
-                        <div class="habitats col-md-6">
-                            <div class="list-group-item class_1">Forests</div>
-                            <div class="list-group-item class_6">Closed Shrublands</div>
-                            <div class="list-group-item class_7">Open Shrublands</div>
-                            <div class="list-group-item class_8">Woody Savannas</div>
-                            <div class="list-group-item class_9">Savannas</div>
-                            <div class="list-group-item class_10">Grasslands</div>
-                            <div class="list-group-item class_11">Permanent Wetlands</div>
-                        </div>
-                        <div class="habitats col-md-6">
-                            <div class="list-group-item class_12">Cropland</div>
-                            <div class="list-group-item class_13">Urban and Built-up</div>
-                            <div class="list-group-item class_14">Cropland/Natural Vegetation Mosaics</div>
-                            <div class="list-group-item class_15">Snow and Ice Barren</div>
-                            <div class="list-group-item class_16">Barren</div>
-                            <div class="list-group-item class_0">Water Bodies</div>
+                    <div class="row">
+                        <div class="controls">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h5>Select environmental parameters for this species</h5>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="control elev">
+                                            <a rel="tooltip" class="help"
+                                                title="Select the elevation range this species prefers.">
+                                                ?
+                                            </a>
+                                            <div class="values">
+                                                Elevation: any
+                                            </div>
+                                            <div class="range">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="control forest">
+                                            <a  rel="tooltip" class="help" 
+                                            title="Select the minimum and maximum forest coverage for this species.">
+                                            ?
+                                            </a>
+                                            <div class="values">
+                                                Forest coverage: any
+                                            </div>
+                                            <div class="range">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        Select suitable habitats
+                                        <a class="help" rel="tooltip"
+                                            title="Click to select/deselect habitats for this species.">?</a>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="control habitats">
+                                            <div class="list-group-item class_1">Forests</div>
+                                            <div class="list-group-item class_6">Closed Shrublands</div>
+                                            <div class="list-group-item class_7">Open Shrublands</div>
+                                            <div class="list-group-item class_8">Woody Savannas</div>
+                                            <div class="list-group-item class_9">Savannas</div>
+                                            <div class="list-group-item class_10">Grasslands</div>
+                                            <div class="list-group-item class_11">Permanent Wetlands</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="control habitats">
+                                            <div class="list-group-item class_12">Cropland</div>
+                                            <div class="list-group-item class_13">Urban and Built-up</div>
+                                            <div class="list-group-item class_14">Cropland/Natural Vegetation Mosaics</div>
+                                            <div class="list-group-item class_15">Snow and Ice Barren</div>
+                                            <div class="list-group-item class_16">Barren</div>
+                                            <div class="list-group-item class_0">Water Bodies</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="metrics row">
@@ -159,20 +192,28 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-7">
                     <div class="row" >
                         <div class="col-md-6">
-                            <input type="text" 
-                                placeholder="Search by species name" 
-                                size=40 class="search" />
+                            <div class="search">
+                                <input type="text" 
+                                    placeholder="Search by species name" 
+                                    class="typeahead" />
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="searchHint">
-                                <a href="javascript:getRandom()"> ... or click here for a random species.</a>
+                            <div class="search">
+                                <a type="button" class ="btn btn-default random">
+                                    Pick random species
+                                </a>
                             </div>
                         </div>
                     </div>
-                    <div class="map">
+                    <div class="row" >
+                        <div class="col-md-12">
+                            <div class="map">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,6 +221,23 @@
         <div class="footer">
             <div class="footer_links">
             </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="errModal" tabindex="-1" role="dialog" aria-labelledby="Uh oh" aria-hidden="true">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Panic</h4>
+              </div>
+              <div class="modal-body">
+                Uh oh, something broke.
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
         </div>
         <script type="text/javascript" src="/js/refine.js"></script>
         <script type="text/javascript">

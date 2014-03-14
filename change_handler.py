@@ -56,7 +56,7 @@ class ChangeAPI(webapp2.RequestHandler):
             rpc = urlfetch.create_rpc(deadline=480)
             rpc.callback = self.create_callback(rpc, i)
             logging.info('Calling %s' % year_url)
-            urlfetch.make_fetch_call(rpc, year_url)
+            urlfetch.make_fetch_call(rpc, year_url,follow_redirects=False)
             self.rpcs.append(rpc)
         
         for rpc in self.rpcs:

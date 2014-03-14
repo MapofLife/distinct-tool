@@ -48,7 +48,6 @@ class RefineHandler(webapp2.RequestHandler):
         sciname = self.request.get('sciname', None)
         habitats = self.request.get('habitats', None)
         elevation = self.request.get('elevation', '-300,8000')
-        year = self.request.get('year', None)
         mode = self.request.get('mode', 'area')
         ee_id = self.request.get('ee_id', None)
         minlng = self.request.get('minx', None)
@@ -86,14 +85,23 @@ class RefineHandler(webapp2.RequestHandler):
         maxelev = int(elevation.split(',')[1])
         habitat_list = map(int, habitats.split(","))
         
+        
+        # If any forest habitat is selected, select them all.
         hasForest=False
         for habitat in habitat_list:
             if habitat > 0 and habitat < 6:
                 hasForest = True
         if hasForest:
-            habitateList = list(set([1,2,3,4,5]+habitat_list))
+            habitat_list = list(set([1,2,3,4,5]+habitat_list))
         #create the refined range
         range = ee.Image(ee_id)
+        
+        logging.info(habitat_list)
+        logging.info(minforest)
+        logging.info(maxforest)
+        logging.info(minelev)
+        logging.info(maxelev)
+        
         
         habitat = ee.Image(0)
 
@@ -104,21 +112,31 @@ class RefineHandler(webapp2.RequestHandler):
             modis_habitat = ee.Image(mol_assets.modis_binary[pref])
             if pref > 0 and pref < 6:
                 habitat = habitat.where(
-                    modis_habitat.gt(0)
+                    modis_habitat
+                        .gt(0)
                         .And(forest.gt(minforest)
                            .And(forest.lt(maxforest)))
                         .And(elev.gt(minelev))
                         .And(elev.lt(maxelev)),
+                    1
+                )
+            else:
+                if hasForest:
+                    habitat = habitat.where(
+                        modis_habitat
+                            .gt(0)
+                            .Or(forest.gt(minforest)
+                                .And(forest.lt(maxforest)))
+                            .And(elev.gt(minelev))
+                            .And(elev.lt(maxelev)),
                         1
                     )
-            else:
-               habitat = habitat.where(
-                    modis_habitat
-                        .gt(0)
-                        .Or(forest.gt(minforest)
-                            .And(forest.lt(maxforest)))
-                        .And(elev.gt(minelev))
-                        .And(elev.lt(maxelev)),
+                else:
+                    habitat = habitat.where(
+                        modis_habitat
+                            .gt(0)
+                            .And(elev.gt(minelev))
+                            .And(elev.lt(maxelev)),
                         1
                     )
                 
@@ -129,40 +147,37 @@ class RefineHandler(webapp2.RequestHandler):
         pointsBuf = self.getBufferedPoints(pointFc)
         
         if pointsBuf:
-            allrange = ee.Image(0).where(range.eq(1),1).where(habitat.eq(1),2)
+            allrange = ee.Image(0).where(
+                range.eq(1),1).where(habitat.eq(1),2)
             
             pointsBufMax = allrange.reduceRegions(
                 pointsBuf,
                 ee.Reducer.max(),
                 1000) 
             
-            points_buffered_map = pointsBufMax.getMapId(
-               {
-                    'palette':'9C031D,FACB0F,016B08',
-                    'min':0,
-                    'max':2
-                }
-            )
+            #points_buffered_map = pointsBufMax.getMapId(
+            #   {
+            #        'palette':'9C031D,FACB0F,016B08',
+            #        'min':0,
+            #        'max':2
+            #    }
+            #)
             
             hist =  pointsBufMax.reduceColumns(
                 ee.Reducer.histogram(),
                 ['max']).getInfo()
-             
-            #out_pts = pointsBufMax.filter(ee.Filter.eq('max',0))
-            #range_pts = pointsBufMax.filter(ee.Filter.eq('max',1))
-            #habitat_pts = pointsBufMax.filter(ee.Filter.eq('max',2))
             
+            #pointImg = ee.Image()
             
-            points_buffered_map = pointsBufMax.getMapId(
-               {
-                    'palette':'9C031D,FACB0F,016B08',
-                    'min':0,
-                    'max':2
-                }
-            )
-            #out_pts_map = out_pts.draw('9C031D',3,0).getMapId()
-            #range_pts_map = range_pts.draw('FACB0F',3,0).getMapId()
-            #habitat_pts_map = habitat_pts.draw('016B08',3,0).getMapId()
+            #pointImg = pointImage.paint(out_pts,"9C031D",0)
+            #pointImg = pointImage.paint(range_pts,"FACB0F",0)
+            #pointImg = pointImage.paint(habitat_pts,"016B08",0)
+            
+            #out_pts_map = out_pts.draw('9C031D',30)
+            #range_pts_map = range_pts.draw('FACB0F',3,0).add(out_pts_map)
+            #habitat_pts_map = habitat_pts.draw('016B08',3,0).add(range_pts_map).getMapId()
+            
+            #points_buffered_map =  pointsBufMax.getMapId()
             points_map = pointFc.getMapId()
             
             if len(hist["histogram"]["histogram"]) >= 3:
@@ -187,8 +202,8 @@ class RefineHandler(webapp2.RequestHandler):
             #habitat_pts_tileurl = EE_TILE_URL % (
             #         habitat_pts_map['mapid'], habitat_pts_map['token'])
             
-            points_buffered_tileurl = EE_TILE_URL % (
-                     points_buffered_map['mapid'], points_buffered_map['token'])
+            #points_buffered_tileurl = EE_TILE_URL % (
+            #         points_buffered_map['mapid'], points_buffered_map['token'])
             points_tileurl = EE_TILE_URL % (
                      points_map['mapid'], points_map['token'])
             
@@ -244,7 +259,7 @@ class RefineHandler(webapp2.RequestHandler):
                 #habitat_pts_tileurl,
                 #out_pts_tileurl,
                 points_tileurl,
-                points_buffered_tileurl
+                #points_buffered_tileurl
             ],
             'area' : {
                 'range' : range_area,
