@@ -142,7 +142,10 @@ html{}
     margin: 0.5em;
     padding:1em;
 }
-
+.bootstrap-switch {
+    height: 1.4em;
+    width:4em;
+}
 .control {
     margin: 1em 0 1em 0;
 }
@@ -151,6 +154,7 @@ html{}
     border-top: 0.2em solid gray;
     padding-top: 1em;
     padding-bottom: 1em;
+    font-size: 1.2em;
     
 }
 .instructions {
@@ -217,7 +221,6 @@ html{}
   display: inline-block;
   opacity: 0;
   max-width: 0;
-
   -webkit-transition: opacity 0.25s, max-width 0.45s; 
   -moz-transition: opacity 0.25s, max-width 0.45s;
   -o-transition: opacity 0.25s, max-width 0.45s;

@@ -28,8 +28,8 @@ class RefineHandler(webapp2.RequestHandler):
     def getRandomPoints(self,sciname):
         cdburl = 'https://mol.cartodb.com/api/v1/sql?q=%s'
         sql = "Select " \
-            "ST_X(ST_Transform(the_geom_webmercator,4326)) as lon, " \
-            "ST_Y(ST_Transform(the_geom_webmercator,4326)) as lat " \
+            "round(CAST(ST_X(ST_Transform(the_geom_webmercator,4326)) as numeric),5) as lon, " \
+            "round(CAST(ST_Y(ST_Transform(the_geom_webmercator,4326)) as numeric),5) as lat " \
             "FROM get_tile('gbif','points','%s','gbif_taxloc') " \
             "order by random() limit 1000"
         
@@ -37,6 +37,7 @@ class RefineHandler(webapp2.RequestHandler):
         url = cdburl % (qstr)
         logging.info(url)
         points = urlfetch.fetch(url)
+        
         return points.content
         
     def get(self):
@@ -109,42 +110,44 @@ class RefineHandler(webapp2.RequestHandler):
         habitat = habitat.mask(range)
 
         for pref in habitat_list:
-            modis_habitat = ee.Image(mol_assets.modis_binary[pref])
-            if pref > 0 and pref < 6:
-                habitat = habitat.where(
-                    modis_habitat
-                        .gt(0)
-                        .And(forest.gt(minforest)
-                           .And(forest.lt(maxforest)))
-                        .And(elev.gt(minelev))
-                        .And(elev.lt(maxelev)),
-                    1
-                )
-            else:
-                if hasForest:
+            if pref >=0 and pref <=17:
+                modis_habitat = ee.Image(mol_assets.modis_binary[pref])
+                if pref > 0 and pref < 6:
                     habitat = habitat.where(
                         modis_habitat
                             .gt(0)
-                            .Or(forest.gt(minforest)
-                                .And(forest.lt(maxforest)))
+                            .And(forest.gt(minforest)
+                               .And(forest.lt(maxforest)))
                             .And(elev.gt(minelev))
                             .And(elev.lt(maxelev)),
                         1
                     )
                 else:
-                    habitat = habitat.where(
-                        modis_habitat
-                            .gt(0)
-                            .And(elev.gt(minelev))
-                            .And(elev.lt(maxelev)),
-                        1
-                    )
+                    if hasForest:
+                        habitat = habitat.where(
+                            modis_habitat
+                                .gt(0)
+                                .Or(forest.gt(minforest)
+                                    .And(forest.lt(maxforest)))
+                                .And(elev.gt(minelev))
+                                .And(elev.lt(maxelev)),
+                            1
+                        )
+                    else:
+                        habitat = habitat.where(
+                            modis_habitat
+                                .gt(0)
+                                .And(elev.gt(minelev))
+                                .And(elev.lt(maxelev)),
+                            1
+                        )
                 
         habitat = habitat.mask(habitat)
         
         pointJson = self.getRandomPoints(sciname)
         pointFc = self.getPointJSONToFC(pointJson)
         pointsBuf = self.getBufferedPoints(pointFc)
+        
         
         if pointsBuf:
             allrange = ee.Image(0).where(
@@ -173,12 +176,14 @@ class RefineHandler(webapp2.RequestHandler):
             #pointImg = pointImage.paint(range_pts,"FACB0F",0)
             #pointImg = pointImage.paint(habitat_pts,"016B08",0)
             
-            #out_pts_map = out_pts.draw('9C031D',30)
-            #range_pts_map = range_pts.draw('FACB0F',3,0).add(out_pts_map)
-            #habitat_pts_map = habitat_pts.draw('016B08',3,0).add(range_pts_map).getMapId()
+            #out_pts_map = ee.Image(out_pts.('9C031D',3)
+            #range_pts_map = range_pts.draw('FACB0F',3).add(out_pts_map)
+            #habitat_pts_map = habitat_pts.draw('016B08',3).add(range_pts_map).getMapId()
             
-            #points_buffered_map =  pointsBufMax.getMapId()
-            points_map = pointFc.getMapId()
+            empty = ee.Image(0)
+            empty = empty.mask(empty)
+            points_buffered_map =  empty.paint(pointsBuf,"9C031D",0).mask(range).getMapId({'opacity' : 0.3})
+            #points_map = pointFc.getMapId()
             
             if len(hist["histogram"]["histogram"]) >= 3:
                 habitat_pts_ct = hist["histogram"]["histogram"][2]
@@ -202,10 +207,10 @@ class RefineHandler(webapp2.RequestHandler):
             #habitat_pts_tileurl = EE_TILE_URL % (
             #         habitat_pts_map['mapid'], habitat_pts_map['token'])
             
-            #points_buffered_tileurl = EE_TILE_URL % (
-            #         points_buffered_map['mapid'], points_buffered_map['token'])
-            points_tileurl = EE_TILE_URL % (
-                     points_map['mapid'], points_map['token'])
+            points_buffered_tileurl = EE_TILE_URL % (
+                     points_buffered_map['mapid'], points_buffered_map['token'])
+           # points_tileurl = EE_TILE_URL % (
+            #         points_map['mapid'], points_map['token'])
             
         else:
             habitat_pts_ct = None
@@ -242,14 +247,17 @@ class RefineHandler(webapp2.RequestHandler):
         data = ee.data.getValue({"json": output.serialize()})
         data = data["properties"]
         logging.info(json.dumps(data))
+        
         habitat_area = round((data["habitat_area"]["area"]) / 1000000)
         range_area = round((data["range_area"]["area"]) / 1000000)
-        
-        habitat = habitat.mask(habitat)
-        habitat_map = habitat.getMapId({'palette': '85AD5A'})
-        
-        habitat_tileurl = EE_TILE_URL % (
-             habitat_map['mapid'], habitat_map['token'])
+        try:
+            habitat = habitat.mask(habitat)
+            habitat_map = habitat.getMapId({'palette': '85AD5A'})
+            
+            habitat_tileurl = EE_TILE_URL % (
+                 habitat_map['mapid'], habitat_map['token'])
+        except:
+            habitat_tileurl = None
          
         #assemble the response object
         response = {
@@ -258,8 +266,8 @@ class RefineHandler(webapp2.RequestHandler):
                 #range_pts_tileurl,
                 #habitat_pts_tileurl,
                 #out_pts_tileurl,
-                points_tileurl,
-                #points_buffered_tileurl
+                #points_tileurl
+                points_buffered_tileurl
             ],
             'area' : {
                 'range' : range_area,
@@ -273,7 +281,7 @@ class RefineHandler(webapp2.RequestHandler):
             'scientificname' : sciname
         }
         
-        cache.add(key,json.dumps(response,ensure_ascii=False),dumps=True)
+        #cache.add(key,json.dumps(response,ensure_ascii=False),dumps=True)
         
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(json.dumps(response))
@@ -293,16 +301,17 @@ class RefineHandler(webapp2.RequestHandler):
                    ee.Feature(
                       ee.Feature.Point(
                          row["lon"],row["lat"]),
-                         {'val':0 }))
+                         {'val':0, 'u' : 0 }))
             
             #Create a FeatureCollection from that array 
             pts_fc = ee.FeatureCollection(pts)
             return pts_fc
         
     def getBufferedPoints(self,pointFc):
-        if pointFc:
+        try:
             return pointFc.map(lambda f: f.buffer(10000))
-        else:
+        except:
+            logging.info(pointFc)
             return None
                 
 application = webapp2.WSGIApplication(

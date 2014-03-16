@@ -9,6 +9,7 @@
         <link rel="stylesheet" 
             href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="/css/slider.css" />
+        <link rel="stylesheet" href="/css/bootstrap-switch.min.css" />
         <link rel="stylesheet" href="/css/refine.css" />
         <link rel="icon" href="/images/favicon128.png" type="image/png">
         <script type="text/javascript" src="http://www.google.com/jsapi"></script>
@@ -19,6 +20,7 @@
         </script>
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/bootstrap-slider.js"></script>
+        <script type="text/javascript" src="js/bootstrap-switch.min.js"></script>
         <script type="text/javascript" src="js/typeahead.bundle.js"></script>
         <script type="text/javascript" src="js/handlebars.js"></script>
     </head>
@@ -98,37 +100,40 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="control elev">
-                                            <a rel="tooltip" class="help"
-                                                title="Select the elevation range this species prefers.">
-                                                ?
-                                            </a>
-                                            <div class="values">
-                                                Elevation: any
-                                            </div>
+                                        <div rel="tooltip" 
+                                             title="Select the elevation range this species prefers." 
+                                             class="control elev">
+                                            <input class="switch" name="elev_switch" type="checkbox" checked data-size="mini" />
+                                            Elevation:
+                                            <span class="values">
+                                                any
+                                            </span>
                                             <div class="range">
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="control forest">
-                                            <a  rel="tooltip" class="help" 
+                                        <div class="control forest"
+                                            rel="tooltip" class="help" 
                                             title="Select the minimum and maximum forest coverage for this species.">
-                                            ?
-                                            </a>
-                                            <div class="values">
-                                                Forest coverage: any
-                                            </div>
+                                            <input class="switch" id="for_switch" name="for_switch" type="checkbox" checked data-size="mini" />
+                                            Tree cover:
+                                            <span class="values">
+                                                any
+                                            </span>
                                             <div class="range">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        Select suitable habitats
-                                        <a class="help" rel="tooltip"
-                                            title="Click to select/deselect habitats for this species.">?</a>
+                                    <div class="col-md-12">
+                                        <div class="control habitat">
+                                            <input class="switch" name="hab_switch" type="checkbox" checked data-size="mini" />
+                                            Select suitable habitats
+                                            <a class="help" rel="tooltip"
+                                                title="Click to select/deselect habitats for this species.">?</a>
+                                    </div>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -236,6 +241,7 @@
               </div>
               <div class="modal-body">
                 Uh oh, something broke.
+                <div class="err"></div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

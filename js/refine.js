@@ -160,6 +160,8 @@ function init() {
             }
         );
       
+      
+      
       $('.habitats [class*=class_]').click(
           function() {
               if($(this).hasClass('selected')) {
@@ -183,8 +185,7 @@ function init() {
        }).on(
           'slide',
           function(event) {
-                $('.elev .values').html(
-                    'Elevation: ' + 
+                $('.elev .values').html( 
                     event.value[0]+ 
                     'm to ' +
                     event.value[1] + 'm');
@@ -204,7 +205,6 @@ function init() {
            }
       ).on('slide', function(event) {
                 $('.forest .values').html(
-                    'Forest&nbsp;coverage:&nbsp;' + 
                     event.value[0]+ 
                     '%&nbsp;to&nbsp;' +
                     event.value[1] + '%');
@@ -212,6 +212,8 @@ function init() {
               }
           
       );
+      $('.switch').bootstrapSwitch();
+      
       
       $('.rerun').click(
           function() {
@@ -383,7 +385,7 @@ function callBackend(response) {
     if(elev[0] != '-1000' && elev[1] != '10000') {
         $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
         $('.elev .values').html(
-            'Elevation:&nbsp;' + elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
+            elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
         $('.elev .values').html('Elevation: any');
@@ -393,7 +395,7 @@ function callBackend(response) {
     if(elev[0] != '-1000' && elev[1] != '10000') {
         $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
         $('.elev .values').html(
-            'Elevation:&nbsp;' + elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
+            elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
         $('.elev .values').html('Elevation: any');
@@ -445,6 +447,9 @@ function callBackend(response) {
                     ).error(
                         function(response) {
                             $('.rerun .glyphicon').removeClass('spin');
+                            $('#errModal .err').text(
+                                JSON.stringify(response)
+                            );
                             $('#errModal').modal();
                         }
                     );
