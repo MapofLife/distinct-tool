@@ -155,7 +155,11 @@ html{}
     padding-top: 1em;
     padding-bottom: 1em;
     font-size: 1.2em;
-    
+}
+
+.metric .name {
+    margin-left: 1em;
+    text-indent: -1em;
 }
 .instructions {
     padding: 1em;

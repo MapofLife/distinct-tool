@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
@@ -62,10 +64,10 @@ class RefineHandler(webapp2.RequestHandler):
         forest = ee.Image(mol_assets.forest)
         
         key = sciname+'|'+habitats+'|'+elevation+'|'+minforest+'|'+maxforest
-        response = cache.get(key,loads=True)
-        if response:
-            self.response.headers["Content-Type"] = "application/json"
-            self.response.out.write(response)
+        #response = cache.get(key,loads=True)
+        #if response:
+        #    self.response.headers["Content-Type"] = "application/json"
+        #    self.response.out.write(response)
  
         minforest = int(minforest)*100
         maxforest = int(maxforest)*100
@@ -182,8 +184,8 @@ class RefineHandler(webapp2.RequestHandler):
             
             empty = ee.Image(0)
             empty = empty.mask(empty)
-            points_buffered_map =  empty.paint(pointsBuf,"9C031D",0).mask(range).getMapId({'opacity' : 0.3})
-            #points_map = pointFc.getMapId()
+            points_buffered_map =  pointsBuf.getMapId()
+            points_map = pointFc.getMapId()
             
             if len(hist["histogram"]["histogram"]) >= 3:
                 habitat_pts_ct = hist["histogram"]["histogram"][2]
@@ -209,8 +211,8 @@ class RefineHandler(webapp2.RequestHandler):
             
             points_buffered_tileurl = EE_TILE_URL % (
                      points_buffered_map['mapid'], points_buffered_map['token'])
-           # points_tileurl = EE_TILE_URL % (
-            #         points_map['mapid'], points_map['token'])
+            points_tileurl = EE_TILE_URL % (
+                     points_map['mapid'], points_map['token'])
             
         else:
             habitat_pts_ct = None
@@ -259,32 +261,69 @@ class RefineHandler(webapp2.RequestHandler):
         except:
             habitat_tileurl = None
          
+        #metrics
+        logging.info(habitat_area)
+        logging.info(range_area)
+        logging.info(habitat_pts_ct)
+        logging.info(range_pts_ct)
+        
+        if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None:
+            
+            expert_precision = habitat_area/range_area
+            expert_sensitivity = 1
+            expert_f = self.getFScore(expert_precision,expert_sensitivity)
+            
+            refined_precision = 1
+            refined_sensitivity = habitat_pts_ct / (range_pts_ct + habitat_pts_ct)
+            refined_f = self.getFScore(refined_precision,refined_sensitivity)
+            
+            precision_change = round(100*(refined_precision - expert_precision)/expert_precision)
+            sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity)/expert_sensitivity)
+            f_change = round(100*(refined_f - expert_f) / expert_f)
+            num_points = range_pts_ct + habitat_pts_ct
+            expert_f = round(expert_f,2)
+            
+        else:
+            expert_precision = None
+            expert_sensitivity = None
+            expert_f = None
+            refined_precision = None
+            refined_sensitivity = None
+            refined_f = None
+            precision_change = None
+            sensitivity_change = None
+            f_change = None
+            num_points = None
+        
         #assemble the response object
         response = {
-            'maps' : [
+            'maps' : [ #map, type, label
                 habitat_tileurl,
                 #range_pts_tileurl,
                 #habitat_pts_tileurl,
                 #out_pts_tileurl,
-                #points_tileurl
-                points_buffered_tileurl
+                points_buffered_tileurl,
+                points_tileurl
             ],
-            'area' : {
-                'range' : range_area,
-                'habitat' : habitat_area
-            },
-            'points' : {
-                'out' : out_pts_ct,
-                'range' : range_pts_ct,
-                'habitat' : habitat_pts_ct
-            },
+            'metrics' : [ #label, value, units
+                {'name':'Expert range area', 'value':range_area, 'units':'km²'},
+                {'name':'Refined range area', 'value':habitat_area,'units':'km²'},
+                {'name':'Change in precision', 'value':precision_change, 'units': '%'},
+                {'name':'Change in sensitivity', 'value': sensitivity_change, 'units':'%'},
+                {'name':'Map Performance (F-score)', 'value': expert_f},
+                {'name':'Change in Performance (Change in F-score)', 'value': f_change, 'units': '%'},
+                {'name':'Available validation points', 'value': num_points}
+            ],
             'scientificname' : sciname
         }
-        
+
         #cache.add(key,json.dumps(response,ensure_ascii=False),dumps=True)
         
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(json.dumps(response))
+
+    def getFScore(self,precision,sensitivity):
+        return 2 * (precision * sensitivity) / (precision + sensitivity)
 
     def getPointJSONToFC(self,pointjson):
         pjson = json.loads(pointjson)

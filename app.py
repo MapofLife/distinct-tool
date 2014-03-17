@@ -13,18 +13,18 @@ else:
 
 class BaseHandler(webapp2.RequestHandler):
     def render_template(self, f, template_args):
-        path = os.path.join(os.path.dirname(__file__), "templates", f)
+        path = os.path.join(os.path.dirname(__file__), "server_templates", f)
         self.response.out.write(template.render(path, template_args))
 
     def push_html(self, f):
-        path = os.path.join(os.path.dirname(__file__), "html", f)
+        path = os.path.join(os.path.dirname(__file__), "server_templates", f)
         self.response.out.write(open(path, 'r').read())
 
 class RefineTool(BaseHandler):
     def get(self):
-        self.render_template('refine-template.html', {})
+        self.push_html('refine-template.html')
     def post(self):
-        self.render_template('refine-template.html', {})
+        self.push_html('refine-template.html')
 
 application = webapp2.WSGIApplication(
          [('/', RefineTool), ('/.*',RefineTool)],

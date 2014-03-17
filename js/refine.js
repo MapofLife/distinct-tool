@@ -319,7 +319,7 @@ function callBackend(response) {
     $('.rerun .glyphicon').addClass('spin');
     
     map.overlayMapTypes.clear();
-    $('.metric').empty();
+    $('.metric').hide();
     
     speciesPrefs = response;
     if (response.total_rows == 0) {
@@ -359,9 +359,6 @@ function callBackend(response) {
     if(response.rows[0].eolthumbnailurl!=null) {
         $('.image').empty();
         $('.image').append($('<img class="specimg" src="'+response.rows[0].eolmediaurl+'">'));
-        $('.area').html('Expert range map area: ' + response.rows[0].area + ' km<sup>2</sup>');
-        
-        
     } else {
          getImage();
     }
@@ -388,7 +385,7 @@ function callBackend(response) {
             elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
-        $('.elev .values').html('Elevation: any');
+        $('.elev .values').html('any');
         
     }
     
@@ -398,7 +395,7 @@ function callBackend(response) {
             elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
-        $('.elev .values').html('Elevation: any');
+        $('.elev .values').html('any');
         
     }
     
@@ -463,12 +460,23 @@ function refineHandler(response) {
     $('.rerun .glyphicon').removeClass('spin');
     
     mapHandler(response.maps);
-    $('.occ_refined').text(addCommas(response.points.habitat));
-    $('.occ_range').text(addCommas(response.points.range));
-    $('.occ_out').text(addCommas(response.points.out));
-    $('.refined_area').html(addCommas(response.area.habitat)+' km<sup>2</sup>');
-    $('.range_area').html(addCommas(response.area.range)+' km<sup>2</sup>');
+    metricsHandler(response.metrics);
+}
 
+// Feeds a metric object into a Handlerbars template and adds the html to the DOM
+function metricsHandler(metrics) {
+    $('.metrics').empty();
+    $.each(
+        metrics,
+        function(i, metric) {
+           
+           if (metric.name != null && metric.value != null) {
+               metric.value = addCommas(metric.value); 
+               $('.metrics').append($(
+                   Handlebars.compile($('#metric').html())(metric).trim())[0]);
+           }
+        }
+    );
 }
 
 function mapHandler(map_layers) {
@@ -515,6 +523,9 @@ function addCommas(val){
     if (val == null) {
         return '';
     }
+    if (val < 0) {
+        return val.toString();
+    }
     while (/(\d+)(\d{3})/.test(val.toString())){
       val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
     }
@@ -549,3 +560,8 @@ String.prototype.format = function(i, safe, arg) {
   return format;
 }();
 
+function getTemplate(name, data) {
+    return $.get('/templates/'+name+'.hbs').then(function(src) {
+       return Handlebars.compile(src)(data);
+    });
+}
