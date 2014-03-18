@@ -143,9 +143,7 @@ class RefineHandler(webapp2.RequestHandler):
                                 .And(elev.lt(maxelev)),
                             1
                         )
-                
-        habitat = habitat.mask(habitat.gte(0))
-        
+
         pointJson = self.getRandomPoints(sciname)
         pointFc = self.getPointJSONToFC(pointJson)
         pointsBuf = self.getBufferedPoints(pointFc)
@@ -226,13 +224,13 @@ class RefineHandler(webapp2.RequestHandler):
         area = ee.call("Image.pixelArea")
         sum_reducer = ee.call("Reducer.sum")
         
-        habitat_area = area.mask(habitat.gte(0)).reduceRegion(
+        habitat_area = area.mask(habitat.gt(0)).reduceRegion(
             ee.Reducer.sum(), 
             geometry, 
             scale=1000,
             maxPixels=10000000000)
         
-        range_area = area.mask(range.gte(0)).reduceRegion(
+        range_area = area.mask(range.gt(0)).reduceRegion(
             ee.Reducer.sum(), 
             geometry, 
             scale=1000,
@@ -252,7 +250,7 @@ class RefineHandler(webapp2.RequestHandler):
         habitat_area = round((data["habitat_area"]["area"]) / 1000000)
         range_area = round((data["range_area"]["area"]) / 1000000)
         try:
-            
+            habitat = habitat.mask(habitat.gt(0))
             habitat_map = habitat.getMapId({'palette': '85AD5A'})
             
             habitat_tileurl = EE_TILE_URL % (
