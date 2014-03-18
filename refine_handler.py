@@ -109,7 +109,7 @@ class RefineHandler(webapp2.RequestHandler):
         habitat = ee.Image(0)
 
         #create the refined habitat
-        habitat = habitat.mask(range)
+        habitat = habitat.mask(range.gte(0))
 
         for pref in habitat_list:
             if pref >=0 and pref <=17:
@@ -144,7 +144,7 @@ class RefineHandler(webapp2.RequestHandler):
                             1
                         )
                 
-        habitat = habitat.mask(habitat)
+        habitat = habitat.mask(habitat.gte(0))
         
         pointJson = self.getRandomPoints(sciname)
         pointFc = self.getPointJSONToFC(pointJson)
@@ -182,8 +182,7 @@ class RefineHandler(webapp2.RequestHandler):
             #range_pts_map = range_pts.draw('FACB0F',3).add(out_pts_map)
             #habitat_pts_map = habitat_pts.draw('016B08',3).add(range_pts_map).getMapId()
             
-            empty = ee.Image(0)
-            empty = empty.mask(empty)
+            
             points_buffered_map =  pointsBuf.getMapId()
             points_map = pointFc.getMapId()
             
@@ -227,13 +226,13 @@ class RefineHandler(webapp2.RequestHandler):
         area = ee.call("Image.pixelArea")
         sum_reducer = ee.call("Reducer.sum")
         
-        habitat_area = area.mask(habitat).reduceRegion(
+        habitat_area = area.mask(habitat.gte(0)).reduceRegion(
             ee.Reducer.sum(), 
             geometry, 
             scale=1000,
             maxPixels=10000000000)
         
-        range_area = area.mask(range).reduceRegion(
+        range_area = area.mask(range.gte(0)).reduceRegion(
             ee.Reducer.sum(), 
             geometry, 
             scale=1000,
@@ -253,7 +252,7 @@ class RefineHandler(webapp2.RequestHandler):
         habitat_area = round((data["habitat_area"]["area"]) / 1000000)
         range_area = round((data["range_area"]["area"]) / 1000000)
         try:
-            habitat = habitat.mask(habitat)
+            
             habitat_map = habitat.getMapId({'palette': '85AD5A'})
             
             habitat_tileurl = EE_TILE_URL % (
@@ -298,12 +297,12 @@ class RefineHandler(webapp2.RequestHandler):
         #assemble the response object
         response = {
             'maps' : [ #map, type, label
-                habitat_tileurl,
+                {'tile_url': habitat_tileurl, 'opacity' : 0.8},
                 #range_pts_tileurl,
                 #habitat_pts_tileurl,
                 #out_pts_tileurl,
-                points_buffered_tileurl,
-                points_tileurl
+                {'tile_url':points_buffered_tileurl, 'opacity' : 0.2},
+                {'tile_url':points_tileurl, 'opacity' : 0.6}
             ],
             'metrics' : [ #label, value, units
                 {'name':'Expert range area', 'value':range_area, 'units':'km²'},

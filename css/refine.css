@@ -106,6 +106,10 @@ html{}
     
 }
 
+.rerun {
+    float:right;
+}
+
 .species .v {
     padding-left:1em;
 }

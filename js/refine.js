@@ -336,6 +336,8 @@ function callBackend(response) {
     
     habitats = response.rows[0].modis_habitats.split(',');
     elev = [response.rows[0].mine, response.rows[0].maxe];
+    minf = response.rows[0].minf;
+    maxf = response.rows[0].maxf;
     ee_id = response.rows[0].ee_id;
     scientificname = response.rows[0].scientificname;
     commonnames = ' (' + response.rows[0].names + ')';
@@ -458,7 +460,7 @@ function callBackend(response) {
 
 function refineHandler(response) {
     $('.rerun .glyphicon').removeClass('spin');
-    
+
     mapHandler(response.maps);
     metricsHandler(response.metrics);
 }
@@ -503,13 +505,16 @@ function mapHandler(map_layers) {
             if(map_layers[l]) {
                 maptype = new google.maps.ImageMapType({
                     getTileUrl: function(coord, zoom) {
-                        return map_layers[l]
+                        return map_layers[l].tile_url
                             .replace(/{X}/g, coord.x)
                             .replace(/{Y}/g, coord.y)
                             .replace(/{Z}/g, zoom);
                     },
                     tileSize: new google.maps.Size(256, 256)
                 });
+                if (map_layers[l].opacity) {
+                    maptype.setOpacity( map_layers[l].opacity);
+                }
                 map.overlayMapTypes.push(maptype);
         }
         }
