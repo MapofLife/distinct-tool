@@ -274,11 +274,14 @@ class RefineHandler(webapp2.RequestHandler):
             refined_sensitivity = habitat_pts_ct / (range_pts_ct + habitat_pts_ct)
             refined_f = self.getFScore(refined_precision,refined_sensitivity)
             
-            precision_change = round(100*(refined_precision - expert_precision)/expert_precision)
-            sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity)/expert_sensitivity)
-            f_change = round(100*(refined_f - expert_f) / expert_f)
+            precision_change = round(100*(refined_precision - expert_precision))
+            sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity))
+            f_change = round(100*(refined_f - expert_f))
             num_points = range_pts_ct + habitat_pts_ct
             expert_f = round(expert_f,2)
+            
+            logging.info('expert_f: %f' % (expert_f,))
+            logging.info('refined_f: %f' % (refined_f,))
             
         else:
             expert_precision = None
@@ -293,6 +296,9 @@ class RefineHandler(webapp2.RequestHandler):
             num_points = None
         
         #assemble the response object
+
+
+        
         response = {
             'maps' : [ #map, type, label
                 {'tile_url': habitat_tileurl, 'opacity' : 0.8},
