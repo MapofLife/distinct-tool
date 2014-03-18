@@ -72,10 +72,15 @@ function getImage() {
         'v=1.0&q={0}&callback=?'.format(scientificname),
         function(response) {
             try {
-                var src = response.responseData.results[0].url;
+                var src = response.responseData.results[0].url,
+                    specimg = $('<img class="specimg">').load(
+                        function(event) {
+                            sizeMap();
+                        });
+                        
                 $('.image').empty();
-                $('.image').append(
-                    $('<img class="specimg" src="{0}">'.format(src)));
+                $('.image').append(specimg);
+                $('.specimg').attr('src',src);
             } catch(e) {
                 console.log('Bad image.');
                 console.log(response);

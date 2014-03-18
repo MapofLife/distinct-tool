@@ -71,12 +71,13 @@
                 <div class="col-md-5">
                     <div class="row">
                         <div class="instructions">
-                            Species range maps are expert estimations of where a 
-                            species can potentially live. However the area within 
-                            a given range encompasses a wide variety of habitats, 
-                            and the actual area inhabited by the species may in 
-                            fact be much smaller. This tool allows expert range 
-                            maps to be refined by known species habitat and 
+                            Species range maps are expert estimations of 
+                            where a species can potentially live. However 
+                            the area within a given range encompasses a 
+                            wide variety of habitats, and the actual area 
+                            inhabited by the species may in fact be much 
+                            smaller. This tool allows expert range maps to 
+                            be refined by known species habitat and 
                             elevation preferences.
                         </div>
                     </div>
@@ -109,7 +110,10 @@
                             <div class="col-md-12">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <h5>Select environmental parameters for this species</h5>
+                                        <h5>
+                                            Select environmental 
+                                            parameters for this species
+                                        </h5>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -117,38 +121,58 @@
                                         <div rel="tooltip" 
                                              title="Select the elevation range this species prefers." 
                                              class="control elev">
-                                            <!--
-                                                <input class="switch" name="elev_switch" type="checkbox" checked data-size="mini" />
-                                            -->
-                                            Elevation:
-                                            <span class="values">
-                                                any
-                                            </span>
-                                            <div class="range">
+                                            <input class="switch"
+                                                name="elev_switch"
+                                                type="checkbox"
+                                                checked data-size="mini" />
+                                            <div class="selector">
+                                                Elevation:
+                                                <span class="values">
+                                                    any
+                                                </span>
+                                                <div class="range">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="control forest"
-                                            rel="tooltip" class="help" 
-                                            title="Select the minimum and maximum forest coverage for this species.">
-                                            <!--
-                                            <input class="switch" id="for_switch" name="for_switch" type="checkbox" checked data-size="mini" />
-                                            -->
-                                            Tree cover:
-                                            <span class="values">
-                                                any
-                                            </span>
-                                            <div class="range">
+                                    <div class="control forest col-md-6"
+                                        rel="tooltip" class="help" 
+                                        title="Select the minimum and maximum forest coverage for this species.">
+                                        <div class="row">
+                                            <div class="col-md-12"></div>
+                                                Tree cover:
+                                                <span class="values">
+                                                    any
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                           <div class="col-md-12"></div>        
+                                                <input class="switch" 
+                                                id="for_switch"
+                                                name="for_switch"
+                                                type="checkbox"
+                                                checked data-size="mini" />
+                                                <div class="range">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <div class="control habitat" rel="tooltip"
-                                                title="Click to select/deselect habitat for this species.">
-                                        Select habitat types:
+                                        <div class="control habitat" 
+                                            rel="tooltip"
+                                            title="Click to select/deselect habitat for this species.">
+                                            <input class="switch" 
+                                                id="for_switch" 
+                                                name="for_switch" 
+                                                type="checkbox" 
+                                                checked data-size="mini" />
+                                            
+                                            <div class="label">
+                                                Select habitat types:
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

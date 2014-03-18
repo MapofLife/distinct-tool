@@ -2,3 +2,9 @@ privatekey.pem
 privatekey.pem
 config.py
 *.pyc
+privatekey.pem.jerm
+config.py.jerm
+config.py.jerm
+privatekey.pem.jerm
+privatekey.pem
+config.py
