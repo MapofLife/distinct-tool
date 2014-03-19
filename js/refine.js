@@ -7,61 +7,7 @@ var scientificname = getURLParameter("name"),
     speciesPrefs,
     host = '', //(window.location.hostname != 'localhost') ?
         //'http://d152fom84hgyre.cloudfront.net/' : '',
-    map_options = {
-        zoom: 2,
-        minZoom: 2,
-        scaleControl: true,
-        center: new google.maps.LatLng(0,0),
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        streetViewControl: false,
-        panControl: false,
-        styles: [
-          {
-            "featureType": "landscape",
-            "stylers": [
-              { "color": "#f4f4f4" }
-            ]
-          },{
-            "featureType": "water",
-            "stylers": [
-              { "visibility": "simplified" }
-            ]
-          },{
-              "featureType": "water",
-            "elementType": "labels",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-          },{
-            "featureType": "water",
-            "stylers": [
-              { "color": "#808080" }
-            ]
-          },{
-            "featureType": "administrative",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-          },{
-            "featureType": "administrative.country",
-            "elementType": "labels",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-          },{
-            "featureType": "road",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-          },{
-            "featureType": "poi",
-            "stylers": [
-              { "visibility": "off" }
-            ]
-          }
-        ]               
-    },
-    map = new google.maps.Map($('.map')[0],map_options);
+    map = new google.maps.Map($('.map')[0],defaults.map_options);
     
                     
 google.setOnLoadCallback(init);
@@ -181,7 +127,7 @@ function init() {
               } else {
                   $(this).addClass('selected');
               }
-              $('.rerun').show();
+              $('.rerun').addClass('stale').addClass('pulse');
           }
       );
 
@@ -201,7 +147,7 @@ function init() {
                     event.value[0]+ 
                     'm to ' +
                     event.value[1] + 'm');
-                $('.rerun').show();
+                $('.rerun').addClass('stale').addClass('pulse');
               }
           
       );
@@ -220,15 +166,18 @@ function init() {
                     event.value[0]+ 
                     '%&nbsp;to&nbsp;' +
                     event.value[1] + '%');
-                $('.rerun').show();
+                $('.rerun').addClass('stale').addClass('pulse');
               }
           
       );
-      $('.switch').bootstrapSwitch();
       
+      //init bootstrap switches
+      $('.switch').bootstrapSwitch();
+      $('.switch').show();
       
       $('.rerun').click(
           function() {
+              
               speciesPrefs.rows[0].modis_habitats = $.map(
                   $('.habitats .selected'),
                   function(elem,index) {
@@ -266,7 +215,10 @@ function init() {
 }
 function getEE_ID(name) {
     var sql = '' + 
-         'SELECT DISTINCT ' +
+         'SELECT *,' +
+             "CASE WHEN string_to_array('1,2,3,4,5',',') && string_to_array(modis_habitats,',') THEN 50 ELSE 0 END as minf, " +
+             "CASE WHEN string_to_array('1,2,3,4,5',',') && string_to_array(modis_habitats,',') THEN 100 ELSE 50 END as maxf " +
+         'FROM (SELECT DISTINCT ' +
                 'l.scientificname as scientificname, ' +
                 'CASE WHEN e.habitatprefs is null THEN ' +
                     'm.modisprefs '+
@@ -280,8 +232,6 @@ function getEE_ID(name) {
                 'ST_ymin(l.extent_4326) as miny, ' +
                 'ST_xmax(l.extent_4326) as maxx, ' +
                 'ST_ymax(l.extent_4326) as maxy, ' +
-                '0 as minf, ' +
-                '100 as maxf, ' +
                 "(SELECT ROUND(SUM(ST_Area(geography(ST_Transform(the_geom_webmercator,4326))))/1000000) as area from get_tile(TEXT('iucn'),TEXT('range'),l.scientificname,null)) as area," +
                 'CASE when eol.good then eolthumbnailurl else null end as eolthumbnailurl, ' +
                 'CASE when eol.good then eolmediaurl else null end as eolmediaurl, ' +
@@ -291,7 +241,7 @@ function getEE_ID(name) {
             'l.scientificname = t.scientificname ' +
             ' LEFT JOIN ee_assets ee ON ' +
             ' l.scientificname = ee.scientificname ' +
-            'LEFT JOIN ac_mar_8_2013 n ON ' +
+            'LEFT JOIN ac n ON ' +
                 'ee.scientificname = n.n ' +
             'LEFT JOIN elevandhabitat e ON ' +
                 'ee.scientificname = e.scientific ' +
@@ -303,7 +253,7 @@ function getEE_ID(name) {
                  " and ee.dataset_id ILIKE'%iucn%' " +
                  " and ee.ee_id is not null " + 
                  " and l.type='range' and l.provider='iucn'" +
-            ' LIMIT 1',
+            ' LIMIT 1) m',
          term = name,
          source = (getURLParameter("source") != "null") ? 
             getURLParameter("source") : 'iucn',
@@ -328,15 +278,20 @@ function callBackend(response) {
     var bounds, habitats;
     latest++; 
     
-    $('.rerun .glyphicon').addClass('spin');
+    $('.rerun .glyphicon').addClass('refreshing');
+    $('.rerun').addClass('stale');
     
     map.overlayMapTypes.clear();
     $('.metric').hide();
     sizeMap();
-    
+     $('.image').empty();
+     
     speciesPrefs = response;
+    
+    //somethings broken
     if (response.total_rows == 0) {
-         $('.image').empty();
+        $('.rerun').removeClass('stale');
+        $('.rerun .glyphicon').removeClass('refreshing');
         return;
     } 
     
@@ -385,10 +340,11 @@ function callBackend(response) {
     
     $('.family').html('Family: ' + response.rows[0].family);
     $('._order').html('Order: ' + response.rows[0]._order);
+    
     try{
         $('.forest .range').slider("setValue",[response.rows[0].minf,response.rows[0].maxf]);
     } catch(e) {
-        $('.forest .range').slider("setValue",[0,100]);
+       // $('.forest .range').slider("setValue",[0,100]);
     }
     
     if(elev[0] != '-1000' && elev[1] != '10000') {
@@ -455,7 +411,8 @@ function callBackend(response) {
                 'jsonp'
                     ).error(
                         function(response) {
-                            $('.rerun .glyphicon').removeClass('spin');
+                            $('.rerun .glyphicon').removeClass('refreshing');
+                            $('.rerun').removeClass('stale').removeClass('pulse');
                             $('#errModal .err').text(
                                 JSON.stringify(response)
                             );
@@ -469,7 +426,8 @@ function callBackend(response) {
 }
 
 function refineHandler(response) {
-    $('.rerun .glyphicon').removeClass('spin');
+     $('.rerun .glyphicon').removeClass('refreshing');
+     $('.rerun').removeClass('stale').removeClass('pulse');;
 
     mapHandler(response.maps);
     metricsHandler(response.metrics);
@@ -512,21 +470,23 @@ function mapHandler(map_layers) {
     map.overlayMapTypes.push(cdb_maptype);
     $.each(
         map_layers,
-        function(l) {
-            if(map_layers[l]) {
-                maptype = new google.maps.ImageMapType({
-                    getTileUrl: function(coord, zoom) {
-                        return map_layers[l].tile_url
-                            .replace(/{X}/g, coord.x)
-                            .replace(/{Y}/g, coord.y)
-                            .replace(/{Z}/g, zoom);
-                    },
-                    tileSize: new google.maps.Size(256, 256)
-                });
-                if (map_layers[l].opacity) {
-                    maptype.setOpacity( map_layers[l].opacity);
+        function(key, val ) {
+            if(val) {
+                if(val.tile_url) {
+                    maptype = new google.maps.ImageMapType({
+                        getTileUrl: function(coord, zoom) {
+                            return val.tile_url
+                                .replace(/{X}/g, coord.x)
+                                .replace(/{Y}/g, coord.y)
+                                .replace(/{Z}/g, zoom);
+                        },
+                        tileSize: new google.maps.Size(256, 256)
+                    });
+                    if (val.opacity) {
+                        maptype.setOpacity( val.opacity);
+                    }
+                    map.overlayMapTypes.push(maptype);
                 }
-                map.overlayMapTypes.push(maptype);
         }
         }
     );

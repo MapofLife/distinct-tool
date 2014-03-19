@@ -1,5 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
+
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
