@@ -37,7 +37,7 @@ class RefineHandler(webapp2.RequestHandler):
         
         qstr = urllib.quote_plus((sql % (sciname)))
         url = cdburl % (qstr)
-        logging.info(url)
+        #logging.info(url)
         points = urlfetch.fetch(url)
         
         return points.content
@@ -59,9 +59,14 @@ class RefineHandler(webapp2.RequestHandler):
         maxlat = self.request.get('maxy', None)
         minforest = self.request.get('minf', '0')
         maxforest = self.request.get('maxf', '100')
-                
+        use_f = (self.request.get('use_f') == 'true') #converts string to bool
+        use_e = (self.request.get('use_e') == 'true')
+        use_h = (self.request.get('use_h') == 'true')
+        
+        logging.info('use_f: %s, use_e: %s, use_h: %s' % (use_f,use_e,use_h))
+
         elev = ee.Image(mol_assets.elevation)
-        forest = ee.Image(mol_assets.forest)
+        #forest = ee.Image(mol_assets.forest)
         
         key = sciname+'|'+habitats+'|'+elevation+'|'+minforest+'|'+maxforest
         #response = cache.get(key,loads=True)
@@ -86,8 +91,12 @@ class RefineHandler(webapp2.RequestHandler):
         #parse the CDB response
         minelev = int(elevation.split(',')[0])
         maxelev = int(elevation.split(',')[1])
-        habitat_list = map(int, habitats.split(","))
         
+        #handles case where habitat filter is on but user did not select habitats
+        if habitats:
+            habitat_list = map(int, habitats.split(","))
+        else:
+            habitat_list = []        
         
         # If any forest habitat is selected, select them all.
         hasForest=False
@@ -105,45 +114,39 @@ class RefineHandler(webapp2.RequestHandler):
         logging.info(minelev)
         logging.info(maxelev)
         
+        #create the refined habitat. an empty range will be returned if all
+        #    filters are turned off
+        habitat = ee.Image(0).mask(0) 
+
+        #make the tree cover layer
+        forestHab = ee.Image(1).mask(range.gte(0)).select(["constant"],["habitat"])
+        if use_f:
+          forest = ee.Image('GME/images/04040405428907908306-09310201000644038383');
+          forestHab = forestHab.where(forest.lt(minforest).Or(forest.gt(maxforest)),0)
         
-        habitat = ee.Image(0)
+        #make the elevation layer
+        elevHab = ee.Image(1).mask(range.gte(0)).select(["constant"],["habitat"])
+        if use_e:
+          elevation = ee.Image('GME/images/04040405428907908306-08319720230328335274');
+          elevHab = elevHab.where(elevation.lt(minelev).Or(elevation.gt(maxelev)),0)
+        
+        #make the landcover layer
+        landcoverHab = ee.Image(1).mask(range.gte(0)).select(["constant"],["habitat"]);
+        if use_h:
+          if habitat_list:
+              layerList = [];
+              for pref in habitat_list:
+                  layerList.append(ee.Image(mol_assets.modis_binary[pref]).mask(range.gte(0)))
+              landcoverHab = ee.ImageCollection.fromImages(layerList).reduce(ee.Reducer.anyNonZero()).select(["b1_any"],["habitat"])
+          else: #case where habitat types is on but no habitats selected
+              landcoverHab = ee.Image(0).mask(range.gte(0)).select(["constant"],["habitat"]);
 
-        #create the refined habitat
-        habitat = habitat.mask(range.gte(0))
-
-        for pref in habitat_list:
-            if pref >=0 and pref <=17:
-                modis_habitat = ee.Image(mol_assets.modis_binary[pref])
-                if pref > 0 and pref < 6:
-                    habitat = habitat.where(
-                        modis_habitat
-                            .gt(0)
-                            .And(forest.gt(minforest)
-                               .And(forest.lt(maxforest)))
-                            .And(elev.gt(minelev))
-                            .And(elev.lt(maxelev)),
-                        1
-                    )
-                else:
-                    if hasForest:
-                        habitat = habitat.where(
-                            modis_habitat
-                                .gt(0)
-                                .Or(forest.gt(minforest)
-                                    .And(forest.lt(maxforest)))
-                                .And(elev.gt(minelev))
-                                .And(elev.lt(maxelev)),
-                            1
-                        )
-                    else:
-                        habitat = habitat.where(
-                            modis_habitat
-                                .gt(0)
-                                .And(elev.gt(minelev))
-                                .And(elev.lt(maxelev)),
-                            1
-                        )
-
+        #combine everything together
+        if use_f or use_e or use_h:
+          habitat = ee.ImageCollection.fromImages([forestHab,elevHab,landcoverHab]).reduce(ee.Reducer.allNonZero()) #AND the layers
+        
+        #if user turned off all toggles the empty range will be returned.
+        
         pointJson = self.getRandomPoints(sciname)
         pointFc = self.getPointJSONToFC(pointJson)
         pointsBuf = self.getBufferedPoints(pointFc)

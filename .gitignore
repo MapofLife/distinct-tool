@@ -8,3 +8,4 @@ config.py.jerm
 privatekey.pem.jerm
 privatekey.pem
 config.py
+privatecert.pem
