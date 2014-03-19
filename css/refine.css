@@ -199,12 +199,15 @@ html{}
     background-color: #7bae33;
     border-radius: 0.3em;
 }
+.elev, .forest .container {padding-left:1em;}
 .range {
-    height:0.1em,;
+    width: 6em;
+    
+  /*  height:0.1em,;
     margin: 0.3em;
     padding-top: 0.1em;
     padding-bottom: 0.1em;
-    outline: none;
+    outline: none;*/
 }
 
 .rereun {

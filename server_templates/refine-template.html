@@ -68,7 +68,7 @@
         </div>
         <div class="container">
             <div class="row">
-                <div class="col-md-5">
+                <div class="left col-md-5">
                     <div class="row">
                         <div class="instructions">
                             Species range maps are expert estimations of 
@@ -117,20 +117,29 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div rel="tooltip" 
-                                             title="Select the elevation range this species prefers." 
-                                             class="control elev">
-                                            <input class="switch"
-                                                name="elev_switch"
-                                                type="checkbox"
-                                                checked data-size="mini" />
-                                            <div class="selector">
+                                    <div class="control elev col-md-6"
+                                        rel="tooltip" class="help" 
+                                        title="Select the elevation range for this species.">
+                                        <div class="row">
+                                            <div class="col-md-12">
                                                 Elevation:
                                                 <span class="values">
                                                     any
                                                 </span>
-                                                <div class="range">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                           <div class="col-md-4">      
+                                                <input class="switch" 
+                                                id="for_switch"
+                                                name="for_switch"
+                                                type="checkbox"
+                                                checked data-size="mini" />
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="container">
+                                                    <div class="range">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -139,7 +148,7 @@
                                         rel="tooltip" class="help" 
                                         title="Select the minimum and maximum forest coverage for this species.">
                                         <div class="row">
-                                            <div class="col-md-12"></div>
+                                            <div class="col-md-12">
                                                 Tree cover:
                                                 <span class="values">
                                                     any
@@ -147,13 +156,17 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                           <div class="col-md-12"></div>        
+                                           <div class="col-md-4">      
                                                 <input class="switch" 
                                                 id="for_switch"
                                                 name="for_switch"
                                                 type="checkbox"
                                                 checked data-size="mini" />
-                                                <div class="range">
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="container">
+                                                    <div class="range">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -169,10 +182,7 @@
                                                 name="for_switch" 
                                                 type="checkbox" 
                                                 checked data-size="mini" />
-                                            
-                                            <div class="label">
                                                 Select habitat types:
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -207,8 +217,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-7">
-                    <div class="row" >
+                <div class="right col-md-7">
+                    <div class="top row" >
                         <div class="col-md-6">
                             <div class="search">
                                 <input type="text" 

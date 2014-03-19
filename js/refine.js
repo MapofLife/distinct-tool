@@ -66,28 +66,35 @@ var scientificname = getURLParameter("name"),
                     
 google.setOnLoadCallback(init);
 
-function getImage() {
-    $.getJSON(
-        'https://ajax.googleapis.com/ajax/services/search/images?' +
-        'v=1.0&q={0}&callback=?'.format(scientificname),
-        function(response) {
-            try {
-                var src = response.responseData.results[0].url,
-                    specimg = $('<img class="specimg">').load(
-                        function(event) {
-                            sizeMap();
-                        });
-                        
-                $('.image').empty();
-                $('.image').append(specimg);
-                $('.specimg').attr('src',src);
-            } catch(e) {
-                console.log('Bad image.');
-                console.log(response);
-            }
-        },
-        'jsonp'
-    );
+function getImage(src) {
+    if (src == null) {
+        $.getJSON(
+            'https://ajax.googleapis.com/ajax/services/search/images?' +
+            'v=1.0&q={0}&callback=?'.format(scientificname),
+            function(response) {
+                try {
+                    loadImage(src)
+                } catch(e) {
+                    console.log('Bad image.');
+                    console.log(response);
+                }
+            },
+            'jsonp'
+        );
+    } else {
+        loadImage(src);
+    }
+}
+
+function loadImage(src) {
+    var specimg = $('<img class="specimg">').load(
+        function(event) {
+            sizeMap();
+        });
+                            
+    $('.image').empty();
+    $('.image').append(specimg);
+    $('.specimg').attr('src',src);
 }
 
 function getURLParameter(name) {
@@ -325,6 +332,7 @@ function callBackend(response) {
     
     map.overlayMapTypes.clear();
     $('.metric').hide();
+    sizeMap();
     
     speciesPrefs = response;
     if (response.total_rows == 0) {
@@ -359,16 +367,13 @@ function callBackend(response) {
         minf: response.rows[0].minf,
         maxf: response.rows[0].maxf,
         sciname: response.rows[0].scientificname,
-        call_ver: latest
+        call_ver: latest,
+        use_f: $('.forest .switch').bootstrapSwitch('state'),
+        use_e: $('.elev .switch').bootstrapSwitch('state'),
+        use_h: $('.habitat .switch').bootstrapSwitch('state')
     };
-    
-    
-    if(response.rows[0].eolthumbnailurl!=null) {
-        $('.image').empty();
-        $('.image').append($('<img class="specimg" src="'+response.rows[0].eolmediaurl+'">'));
-    } else {
-         getImage();
-    }
+
+    getImage(response.rows[0].eolmediaurl);
     
     $('.sciname').html(response.rows[0].scientificname);
     $('.common').html(response.rows[0].names.replace(/,.*/,''));
@@ -484,6 +489,7 @@ function metricsHandler(metrics) {
            }
         }
     );
+    sizeMap();
 }
 
 function mapHandler(map_layers) {
@@ -528,7 +534,10 @@ function mapHandler(map_layers) {
     
     
 }
-
+function sizeMap() {
+    $('.map').height($('.left').height()-$('.right .top').height());
+    google.maps.event.trigger(map, "resize");
+}
 function addCommas(val){
     if (val == null) {
         return '';
