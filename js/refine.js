@@ -196,7 +196,7 @@ function init() {
               catch(e) {speciesPrefs.rows[0].minf = 0;}
               try{speciesPrefs.rows[0].maxf = $('.forest .range').data('value')[1];}
               catch(e) {speciesPrefs.rows[0].maxf =100;}
-              callBackend(speciesPrefs);
+              callBackend(speciesPrefs, false);
               $(this).removeClass('active');
           }
       );
@@ -274,7 +274,7 @@ function getEE_ID(name) {
             }
         );    
 }
-function callBackend(response) {
+function callBackend(response, zoom) {
     var bounds, habitats;
     latest++; 
     
@@ -300,8 +300,9 @@ function callBackend(response) {
         new google.maps.LatLng(response.rows[0].maxy, response.rows[0].maxx)
     );
     
-    map.fitBounds(bounds);
-    
+    if(zoom) {
+        map.fitBounds(bounds);
+    }
     habitats = response.rows[0].modis_habitats.split(',');
     elev = [response.rows[0].mine, response.rows[0].maxe];
     minf = response.rows[0].minf;
