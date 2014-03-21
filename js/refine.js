@@ -19,7 +19,8 @@ function getImage(src) {
             'v=1.0&q={0}&callback=?'.format(scientificname),
             function(response) {
                 try {
-                    loadImage(src)
+                    console.log(response)
+                    loadImage(response.responseData.results[0].url);
                 } catch(e) {
                     console.log('Bad image.');
                     console.log(response);
@@ -143,10 +144,9 @@ function init() {
        }).on(
           'slide',
           function(event) {
-                $('.elev .values').html( 
-                    event.value[0]+ 
-                    'm to ' +
-                    event.value[1] + 'm');
+              var min = (event.value[0] >=0 ) ? event.value[0] : 0,
+                  max = (event.value[1] >=0 ) ? event.value[1] : 0;
+                $('.elev .values').html('{0}m to {1}m'.format(min, max));
                 $('.rerun').addClass('stale').addClass('pulse');
               }
           
@@ -224,8 +224,11 @@ function getEE_ID(name) {
                     'm.modisprefs '+
                 'ELSE ' +
                   ' e.habitatprefs end as modis_habitats, ' +
-                "CASE WHEN e.finalmin is null OR e.finalmin = 'DD' OR e.finalmin = '0' then '-1000' else e.finalmin end as mine, " +
-                "CASE WHEN e.finalmax is null OR e.finalmax = 'DD' then '10000' else e.finalmax end as maxe, " +
+                "CASE WHEN " +
+                    "e.finalmin is null OR e.finalmin = 'DD' OR " + 
+                    "e.finalmin = '-500' "+
+                "THEN '-1000' ELSE e.finalmin END as mine, " +
+                "CASE WHEN e.finalmax is null OR e.finalmax = 'DD' THEN '10000' else e.finalmax end as maxe, " +
                 'ee.ee_id as ee_id, ' +
                 'CONCAT(n.v,\'\') as names, ' +
                 'ST_xmin(l.extent_4326) as minx, ' +
@@ -304,7 +307,10 @@ function callBackend(response, zoom) {
         map.fitBounds(bounds);
     }
     habitats = response.rows[0].modis_habitats.split(',');
-    elev = [response.rows[0].mine, response.rows[0].maxe];
+    elev = [
+        Math.floor(parseInt(response.rows[0].mine)/100)*100, 
+        Math.ceil(response.rows[0].maxe/100)*100];
+    elev[0] = (elev[0] == 0) ? -500 : elev[0];
     minf = response.rows[0].minf;
     maxf = response.rows[0].maxf;
     ee_id = response.rows[0].ee_id;
