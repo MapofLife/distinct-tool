@@ -142,7 +142,7 @@ function init() {
           value: [-500, 8000],
           step: 100
        }).on(
-          'slide',
+          'change',
           function(event) {
               var min = (event.value[0] >=0 ) ? event.value[0] : 0,
                   max = (event.value[1] >=0 ) ? event.value[1] : 0;
@@ -250,11 +250,11 @@ function getEE_ID(name) {
                 'ee.scientificname = e.scientific ' +
             'LEFT JOIN modis_prefs_join m' +
             ' ON ee.scientificname = m.binomial ' +
-            'LEFT JOIN eol ON ' +
-            ' ee.scientificname = eol.scientificname ' +
+            'LEFT JOIN  eol ON ' +
+            ' ee.scientificname = eol.scientificname AND eol.good = true ' +
             "where (m.modisprefs is not null OR e.habitatprefs is not null) AND (n.n~*'\\m{TERM}' OR n.v~*'\\m{TERM}') " +
                  " and ee.dataset_id ILIKE'%iucn%' " +
-                 " and ee.ee_id is not null " + 
+                 " and ee.ee_id is not null  " + 
                  " and l.type='range' and l.provider='iucn'" +
             ' LIMIT 1) m',
          term = name,
@@ -337,27 +337,33 @@ function callBackend(response, zoom) {
 
     getImage(response.rows[0].eolmediaurl);
     
+    //use a Handlebars template here!
+    
     $('.sciname').html(response.rows[0].scientificname);
     $('.common').html(response.rows[0].names.replace(/,.*/,''));
     if(response.rows[0]._class!=null) {        
         $('._class').html('Class: ' + response.rows[0]._class);
-    } else {
-        
-    }
+    } 
     
     $('.family').html('Family: ' + response.rows[0].family);
     $('._order').html('Order: ' + response.rows[0]._order);
     
     try{
         $('.forest .range').slider("setValue",[response.rows[0].minf,response.rows[0].maxf]);
+        $('.forest .values').html(
+            minf+ '%&nbsp;to&nbsp;' +maxf + '%');
     } catch(e) {
-       // $('.forest .range').slider("setValue",[0,100]);
+        $('.forest .range').slider("setValue",[0,100]);
+        $('.elev .values').html('all');
     }
     
     
     
     if(elev[0] != '-1000' && elev[1] != '10000') {
-        $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
+        $('.elev .range').slider("setValue",[elev[0],elev[1]]);
+        
+        $('.elev .values').html(
+            ((elev[0]>0) ? elev[0] : 0) + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
         $('.elev .values').html('any');
