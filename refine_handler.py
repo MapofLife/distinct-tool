@@ -161,10 +161,7 @@ class RefineHandler(webapp2.RequestHandler):
                 pointsBuf,
                 ee.Reducer.max(),
                 1000) 
-            habitat_pts_ct = pointsBufMax.filterMetadata(
-                'max','equals',2).aggregate_count('max').getInfo()
-            range_pts_ct = pointsBufMax.filterMetadata(
-                'max','equals',1).aggregate_count('max').getInfo()
+            
             #points_buffered_map = pointsBufMax.getMapId(
             #   {
             #        'palette':'9C031D,FACB0F,016B08',
@@ -173,11 +170,9 @@ class RefineHandler(webapp2.RequestHandler):
             #    }
             #)
             
-            #hist =  pointsBufMax.reduceColumns(
-            #    ee.Reducer.histogram(),
-            #    ['max']).getInfo()
-            
-            
+            hist =  pointsBufMax.reduceColumns(
+                ee.Reducer.histogram(),
+                ['max']).getInfo()
             
             #pointImg = ee.Image()
             
@@ -193,22 +188,21 @@ class RefineHandler(webapp2.RequestHandler):
             points_buffered_map =  pointsBuf.getMapId()
             points_map = pointFc.getMapId()
             
-            #if len(hist["histogram"]["histogram"]) >= 3:
-            #    habitat_pts_ct = hist["histogram"]["histogram"][2]
-            #else:
-            #    habitat_pts_ct = 0
-            #    
-            ##if len(hist["histogram"]["histogram"]) >= 2:
-            #    range_pts_ct = hist["histogram"]["histogram"][1]
-            #else:
-            #    range_pts_ct = 0
+            if len(hist["histogram"]["histogram"]) >= 3:
+                habitat_pts_ct = hist["histogram"]["histogram"][2]
+            else:
+                habitat_pts_ct = None
                 
-            #if len(hist["histogram"]["histogram"]) >= 1:
-            #    out_pts_ct = hist["histogram"]["histogram"][0]
-            #else:
-            #    out_pts_ct = 0
-            #logging.info(hist) 
-            
+            if len(hist["histogram"]["histogram"]) >= 2:
+                range_pts_ct = hist["histogram"]["histogram"][1]
+            else:
+                range_pts_ct = None
+                
+            if len(hist["histogram"]["histogram"]) >= 1:
+                out_pts_ct = hist["histogram"]["histogram"][0]
+            else:
+                out_pts_ct = None
+                
             #range_pts_tileurl = EE_TILE_URL % (
             #         range_pts_map['mapid'], range_pts_map['token'])
             #out_pts_tileurl = EE_TILE_URL % (
@@ -274,7 +268,7 @@ class RefineHandler(webapp2.RequestHandler):
         logging.info(habitat_pts_ct)
         logging.info(range_pts_ct)
         
-        if habitat_area <> None and range_area <> None  and habitat_pts_ct <> None and range_pts_ct <> None:
+        if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None:
             
             range_change = round(100*(habitat_area - range_area) / range_area) # % change in range
             expert_precision = habitat_area/range_area
@@ -282,23 +276,14 @@ class RefineHandler(webapp2.RequestHandler):
             expert_f = round(100*self.getFScore(expert_precision,expert_sensitivity))
             
             refined_precision = 1
-            if range_pts_ct + habitat_pts_ct >0:
-                refined_sensitivity = habitat_pts_ct / (range_pts_ct + habitat_pts_ct)
-                refined_f = round(100*self.getFScore(refined_precision,refined_sensitivity))
-                sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity))
-                f_change = refined_f - expert_f
-            else:
-                refined_sensitivity = None
-                sensitivity_change = None
-                refined_f = None
-                f_change = None
-                
-                 
+            refined_sensitivity = habitat_pts_ct / (range_pts_ct + habitat_pts_ct)
+            refined_f = round(100*self.getFScore(refined_precision,refined_sensitivity))
+            
             precision_change = round(100*(refined_precision - expert_precision))
-           
+            sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity))
+            f_change = refined_f - expert_f
             num_points = range_pts_ct + habitat_pts_ct
             expert_f = round(expert_f,2)
-            
             
         else:
             range_change = None
