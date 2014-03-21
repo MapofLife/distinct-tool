@@ -354,20 +354,10 @@ function callBackend(response, zoom) {
        // $('.forest .range').slider("setValue",[0,100]);
     }
     
-    if(elev[0] != '-1000' && elev[1] != '10000') {
-        $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
-        $('.elev .values').html(
-            elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
-    } else {
-        $('.elev .range').slider("setValue",[-500,8000]);
-        $('.elev .values').html('any');
-        
-    }
+    
     
     if(elev[0] != '-1000' && elev[1] != '10000') {
         $('.elev .range').slider("setValue",[Math.round(parseFloat(elev[0])),Math.round(parseFloat(elev[1]))]);
-        $('.elev .values').html(
-            elev[0] + 'm&nbsp;to&nbsp;' + elev[1] + 'm');
     } else {
         $('.elev .range').slider("setValue",[-500,8000]);
         $('.elev .values').html('any');
