@@ -263,8 +263,8 @@ class RefineHandler(webapp2.RequestHandler):
         
         if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None and (habitat_pts_ct+range_pts_ct)>0:
             
-            habitat_pts_ct = int(habitat_pts_ct)
-            range_pts_ct = int(range_pts_ct)
+            habitat_pts_ct = float(habitat_pts_ct)
+            range_pts_ct = float(range_pts_ct)
             logging.info('hab pts ct %i' % habitat_pts_ct)
             logging.info('range pts ct %i' % range_pts_ct)
             
