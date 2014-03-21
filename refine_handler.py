@@ -270,17 +270,18 @@ class RefineHandler(webapp2.RequestHandler):
         
         if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None:
             
+            range_change = round(100*(habitat_area - range_area) / range_area) # % change in range
             expert_precision = habitat_area/range_area
             expert_sensitivity = 1
-            expert_f = self.getFScore(expert_precision,expert_sensitivity)
+            expert_f = round(100*self.getFScore(expert_precision,expert_sensitivity))
             
             refined_precision = 1
             refined_sensitivity = habitat_pts_ct / (range_pts_ct + habitat_pts_ct)
-            refined_f = self.getFScore(refined_precision,refined_sensitivity)
+            refined_f = round(100*self.getFScore(refined_precision,refined_sensitivity))
             
             precision_change = round(100*(refined_precision - expert_precision))
             sensitivity_change = round(100*(refined_sensitivity - expert_sensitivity))
-            f_change = round(100*(refined_f - expert_f))
+            f_change = refined_f - expert_f
             num_points = range_pts_ct + habitat_pts_ct
             expert_f = round(expert_f,2)
             
@@ -301,7 +302,6 @@ class RefineHandler(webapp2.RequestHandler):
         
         #assemble the response object
 
-
         
         response = {
             'maps' : [ #map, type, label
@@ -313,13 +313,14 @@ class RefineHandler(webapp2.RequestHandler):
                 {'tile_url':points_tileurl, 'opacity' : 0.6}
             ],
             'metrics' : [ #label, value, units
-                {'name':'Expert range area', 'value':range_area, 'units':'km²'},
-                {'name':'Refined range area', 'value':habitat_area,'units':'km²'},
-                {'name':'Change in precision', 'value':precision_change, 'units': '%'},
+                {'name':'Expert range size', 'value':range_area, 'units':'km²'},
+                {'name':'Refined range size', 'value':habitat_area,'units':'km²'},
+                {'name':'Change in range size', 'value':range_change, 'units': '%'},
+                {'name':'Refined map performance', 'value': refined_f, 'units': '%'},
+                {'name':'Change in map performance', 'value': f_change, 'units': '%'},
                 {'name':'Change in sensitivity', 'value': sensitivity_change, 'units':'%'},
-                {'name':'Map Performance (F-score)', 'value': expert_f},
-                {'name':'Change in Performance (Change in F-score)', 'value': f_change, 'units': '%'},
-                {'name':'Available validation points', 'value': num_points}
+                {'name':'Validation points in refined range', 'value': habitat_pts_ct},
+                {'name':'Total available validation points', 'value': num_points}
             ],
             'scientificname' : sciname
         }
