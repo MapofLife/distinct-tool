@@ -142,7 +142,7 @@ function init() {
           value: [-500, 8000],
           step: 100
        }).on(
-          'change',
+          'slide',
           function(event) {
               var min = (event.value[0] >=0 ) ? event.value[0] : 0,
                   max = (event.value[1] >=0 ) ? event.value[1] : 0;
@@ -188,13 +188,13 @@ function init() {
                         .replace("selected",""));
                   }
               ).join(',');
-              try{speciesPrefs.rows[0].mine = $('.elev .range').data('value')[0];}
+              try{speciesPrefs.rows[0].mine = $('.elev .range').data().slider.value[0];}
               catch(e) {speciesPrefs.rows[0].mine =-500;}
-              try{speciesPrefs.rows[0].maxe = $('.elev .range').data('value')[1];}
+              try{speciesPrefs.rows[0].maxe = $('.elev .range').data().slider.value[1];}
               catch(e) {speciesPrefs.rows[0].maxe =8000;}
-              try{speciesPrefs.rows[0].minf = $('.forest .range').data('value')[0];}
+              try{speciesPrefs.rows[0].minf = $('.forest .range').data().slider.value[0];}
               catch(e) {speciesPrefs.rows[0].minf = 0;}
-              try{speciesPrefs.rows[0].maxf = $('.forest .range').data('value')[1];}
+              try{speciesPrefs.rows[0].maxf = $('.forest .range').data().slider.value[1];}
               catch(e) {speciesPrefs.rows[0].maxf =100;}
               callBackend(speciesPrefs, false);
               $(this).removeClass('active');
@@ -287,7 +287,7 @@ function callBackend(response, zoom) {
     map.overlayMapTypes.clear();
     $('.metric').hide();
     sizeMap();
-     $('.image').empty();
+    
      
     speciesPrefs = response;
     
@@ -305,6 +305,8 @@ function callBackend(response, zoom) {
     
     if(zoom) {
         map.fitBounds(bounds);
+        $('.image').empty();
+        getImage(response.rows[0].eolmediaurl);
     }
     habitats = response.rows[0].modis_habitats.split(',');
     elev = [
@@ -335,7 +337,7 @@ function callBackend(response, zoom) {
         use_h: $('.habitat .switch').bootstrapSwitch('state')
     };
 
-    getImage(response.rows[0].eolmediaurl);
+    
     
     //use a Handlebars template here!
     
