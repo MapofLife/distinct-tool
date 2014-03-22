@@ -13,7 +13,8 @@ var scientificname = getURLParameter("name"),
 google.setOnLoadCallback(init);
 
 function getImage(src) {
-    if (src == null) {
+
+    if (src == null && scientificname != undefined && scientificname != null) {
         $.getJSON(
             'https://ajax.googleapis.com/ajax/services/search/images?' +
             'v=1.0&q={0}&callback=?'.format(scientificname),
@@ -283,6 +284,8 @@ function callBackend(response, zoom) {
     
     $('.rerun .glyphicon').addClass('refreshing');
     $('.rerun').addClass('stale');
+    
+    scientificname = response.rows[0].scientificname;
     
     map.overlayMapTypes.clear();
     $('.metric').hide();

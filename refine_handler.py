@@ -162,17 +162,14 @@ class RefineHandler(webapp2.RequestHandler):
                 ee.Reducer.max(),
                 1000) 
             
-            #points_buffered_map = pointsBufMax.getMapId(
-            #   {
-            #        'palette':'9C031D,FACB0F,016B08',
-            #        'min':0,
-            #        'max':2
-            #    }
-            #)
+            habitat_pts_ct = pointsBufMax.filterMetadata('max','equals',2).aggregate_count('max').getInfo()
+            range_pts_ct = pointsBufMax.filterMetadata('max','equals',1).aggregate_count('max').getInfo()
             
-            hist =  pointsBufMax.reduceColumns(
-                ee.Reducer.histogram(),
-                ['max']).getInfo()
+            #hist =  pointsBufMax.reduceColumns(
+            #    ee.Reducer.histogram(),
+            #    ['max']).getInfo()
+            #    
+            #logging.info(json.dumps(hist))
             
             #pointImg = ee.Image()
             
@@ -188,20 +185,16 @@ class RefineHandler(webapp2.RequestHandler):
             points_buffered_map =  pointsBuf.getMapId()
             points_map = pointFc.getMapId()
             
-            if len(hist["histogram"]["histogram"]) >= 3:
-                habitat_pts_ct = hist["histogram"]["histogram"][2]
-            else:
-                habitat_pts_ct = None
+           # if len(hist["histogram"]["histogram"]) >= 3:
+           #     habitat_pts_ct = hist["histogram"]["histogram"][2]
+           # else:
+           #     habitat_pts_ct = None
                 
-            if len(hist["histogram"]["histogram"]) >= 2:
-                range_pts_ct = hist["histogram"]["histogram"][1]
-            else:
-                range_pts_ct = None
+           # if len(hist["histogram"]["histogram"]) >= 2:
+           #     range_pts_ct = hist["histogram"]["histogram"][1]
+           # else:
+           #     range_pts_ct = None
                 
-            if len(hist["histogram"]["histogram"]) >= 1:
-                out_pts_ct = hist["histogram"]["histogram"][0]
-            else:
-                out_pts_ct = None
                 
             #range_pts_tileurl = EE_TILE_URL % (
             #         range_pts_map['mapid'], range_pts_map['token'])
@@ -268,7 +261,13 @@ class RefineHandler(webapp2.RequestHandler):
         logging.info(habitat_pts_ct)
         logging.info(range_pts_ct)
         
-        if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None:
+        if habitat_area <> None and range_area <> None and habitat_pts_ct <> None and range_pts_ct <> None and (habitat_pts_ct+range_pts_ct)>0:
+            
+            habitat_pts_ct = float(habitat_pts_ct)
+            range_pts_ct = float(range_pts_ct)
+            logging.info('hab pts ct %i' % habitat_pts_ct)
+            logging.info('range pts ct %i' % range_pts_ct)
+            
             
             range_change = round(100*(habitat_area - range_area) / range_area) # % change in range
             expert_precision = habitat_area/range_area
