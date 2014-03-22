@@ -443,14 +443,14 @@ function refineHandler(response) {
 
 // Feeds a metric object into a Handlerbars template and adds the html to the DOM
 function metricsHandler(metrics) {
-    $('.metrics').empty();
+    $('.metrics_container').empty();
     $.each(
         metrics,
         function(i, metric) {
            
            if (metric.name != null && metric.value != null) {
                metric.value = addCommas(metric.value); 
-               $('.metrics').append($(
+               $('.metrics_container').append($(
                    Handlebars.compile($('#metric').html())(metric).trim())[0]);
            }
         }
