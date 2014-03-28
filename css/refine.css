@@ -110,7 +110,7 @@ html{}
         sans-serif;
 }
 .logo {
-    height:100px;
+    height:80px;
     margin-right: 10px;
 }
 .map {
@@ -178,7 +178,11 @@ html{}
     background-color: #7bae33;
     border-radius: 0.3em;
 }
-.elev, .forest .container {padding-left:1em;}
+
+.elev, .forest .container {
+    padding-left:1em;
+}
+
 .range {
     width: 6em;
    
@@ -187,6 +191,7 @@ html{}
 .slider .slider-horizontal {
   
 }
+
 .slider-handle {
     border: 0.05em solid #ddd;
     border-radius: 0.5em; 
@@ -194,17 +199,20 @@ html{}
     background-image: linear-gradient(to bottom, #8cbf44 0,#7bae33 100%);
     opacity: 1;
 }
+
 [class*=class_] {
     cursor: pointer;  
-    padding: 0.8em}
+    padding: 0.8em;
+}
+
 .spinner {
-  display: inline-block;
-  opacity: 0;
-  max-width: 0;
-  -webkit-transition: opacity 0.25s, max-width 0.45s; 
-  -moz-transition: opacity 0.25s, max-width 0.45s;
-  -o-transition: opacity 0.25s, max-width 0.45s;
-  transition: opacity 0.25s, max-width 0.45s; /* Duration fixed since we animate additional hidden width */
+    display: inline-block;
+    opacity: 0;
+    max-width: 0;
+    -webkit-transition: opacity 0.25s, max-width 0.45s; 
+    -moz-transition: opacity 0.25s, max-width 0.45s;
+    -o-transition: opacity 0.25s, max-width 0.45s;
+    transition: opacity 0.25s, max-width 0.45s; /* Duration fixed since we animate additional hidden width */
 }
 
 .has-spinner.active {
@@ -332,7 +340,6 @@ html{}
 }
 
 .refreshing {
-     
      -webkit-transform-origin: 50% 50%;
      transform-origin:50% 50%;
      -ms-transform-origin:50% 50%; /* IE 9 */
