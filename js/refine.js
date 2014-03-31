@@ -220,12 +220,12 @@ function getEE_ID(name) {
              "CASE "+
                 "WHEN string_to_array('1,2,3,4,5',',') && " +
                     "string_to_array(modis_habitats,',') AND NOT (" +
-                    "string_to_array('6,7,8,9,10,11,12,13,15,16,17,0',',') " +
+                    "string_to_array('6,7,8,9,10,11,12,13,14,15,16,17,0',',') " +
                     "&& string_to_array(modis_habitats,','))" +
                 "THEN 50 " +
                 "WHEN (string_to_array('1,2,3,4,5',',') && " +
                     "string_to_array(modis_habitats,',')) AND (" +
-                    "string_to_array('6,7,8,9,10,11,12,13,15,16,17,0',',') " +
+                    "string_to_array('6,7,8,9,10,11,12,13,14,15,16,17,0',',') " +
                     "&& string_to_array(modis_habitats,',')) " +
                 "THEN 0 " +
                 "ELSE 0 " +
@@ -233,12 +233,12 @@ function getEE_ID(name) {
              "CASE " +
                 "WHEN string_to_array('1,2,3,4,5',',') && " +
                     "string_to_array(modis_habitats,',') AND NOT (" +
-                    "string_to_array('6,7,8,9,10,11,12,13,15,16,17,0',',') " +
+                    "string_to_array('6,7,8,9,10,11,12,13,14,15,16,17,0',',') " +
                     "&& string_to_array(modis_habitats,',')) " +
                 "THEN 100 " +
                 "WHEN string_to_array('1,2,3,4,5',',') && " +
                     "string_to_array(modis_habitats,',') AND " +
-                    "string_to_array('6,7,8,9,10,11,12,13,15,16,17,0',',') " +
+                    "string_to_array('6,7,8,9,10,11,12,13,14,15,16,17,0',',') " +
                     "&& string_to_array(modis_habitats,',') " +
                 "THEN 100 " +
                 "ELSE 50 " +
