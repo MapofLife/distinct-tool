@@ -20,14 +20,14 @@ class BaseHandler(webapp2.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "server_templates", f)
         self.response.out.write(open(path, 'r').read())
 
-class RefineTool(BaseHandler):
+class DistinctTool(BaseHandler):
     def get(self):
-        self.push_html('refine-template.html')
+        self.push_html('distinct-template.html')
     def post(self):
-        self.push_html('refine-template.html')
+        self.push_html('distinct-template.html')
 
 application = webapp2.WSGIApplication(
-         [('/', RefineTool), ('/.*',RefineTool)],
+         [('/', DistinctTool), ('/.*',DistinctTool)],
          debug=True)
 
 def main():

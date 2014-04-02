@@ -4,7 +4,7 @@
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
         <meta charset="utf-8">
         <title>
-            Map of Life - Species Range Refinement
+            Map of Life - Species Evolutionary Distinctness
         </title>
         <link rel="stylesheet" 
             href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
@@ -23,14 +23,15 @@
         <script type="text/javascript" src="js/bootstrap-switch.min.js"></script>
         <script type="text/javascript" src="js/typeahead.bundle.js"></script>
         <script type="text/javascript" src="js/handlebars.js"></script>
+        <script type="text/javascript" src="js/d3.min.js"></script>
         <script id="metric" type="text/x-handlebars-template">
             <div class="row metric">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <div class="name">
                         {{name}}
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="value">
                         {{value}}&nbsp;{{units}}
                     </div>
@@ -46,8 +47,7 @@
                         <img src="images/MOL_full_logo.png" class="logo" />
                     </div>
                     <div class="col-md-6">
-                       <h1>Species Range Refinement</h1>
-                       <h4>Powered by Map of Life and Google Earth Engine</h4>
+                       <h1>Species Evolutionary Distinctness</h1>
                     </div>
                 </div>
             </div>          
@@ -57,6 +57,9 @@
                 <div class="row">
                     <div class="nav_buttons col-md-12">
                         <span class="nav_button nav_selected">
+                            Species Distinctness
+                        </span>
+                        <span class="nav_button">
                             Range Map Refinement
                         </span>
                         <span class="nav_button">
@@ -69,20 +72,6 @@
         <div class="container">
             <div class="row">
                 <div class="left col-md-5">
-                    <div class="row">
-                        <div class="instructions">
-                            Expert range maps delineate the outer 
-                            boundaries of where a species is expected to 
-                            occur, but overestimate species’ actual 
-                            distribution. This tool allows combining 
-                            habitat suitability knowledge with 
-                            remote-sensing based environmental layers to 
-                            improve the precision of our species range 
-                            estimate. Where available, a base refinement 
-                            with current expert suitability information 
-                            is provided. 
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="info">
                             <div class="col-md-7">
@@ -108,122 +97,15 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="controls">
-                            <div class="col-md-12">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <h5>
-                                            Use the environmental filters 
-                                            below to refine the species 
-                                            distribution. 
-                                        </h5>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="control elev col-md-6"
-                                        rel="tooltip" class="help" 
-                                        title="Select the elevation range for this species.">
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                Elevation:
-                                                <span class="values">
-                                                    any
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                           <div class="col-md-4">      
-                                                <input class="switch" 
-                                                id="for_switch"
-                                                name="for_switch"
-                                                type="checkbox"
-                                                checked data-size="mini" />
-                                            </div>
-                                            <div class="col-md-8">
-                                                <div class="container">
-                                                    <div class="range">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="control forest col-md-6"
-                                        rel="tooltip" class="help" 
-                                        title="Select the minimum and maximum forest coverage for this species.">
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                Tree cover:
-                                                <span class="values">
-                                                    any
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                           <div class="col-md-4">      
-                                                <input class="switch" 
-                                                id="for_switch"
-                                                name="for_switch"
-                                                type="checkbox"
-                                                checked data-size="mini" />
-                                            </div>
-                                            <div class="col-md-8">
-                                                <div class="container">
-                                                    <div class="range">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="control habitat" 
-                                            rel="tooltip"
-                                            title="Click to select/deselect habitat for this species.">
-                                            <input class="switch" 
-                                                id="for_switch" 
-                                                name="for_switch" 
-                                                type="checkbox" 
-                                                checked data-size="mini" />
-                                                Select habitat types:
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="control habitats">
-                                            <div class="list-group-item class_1">Forests</div>
-                                            <div class="list-group-item class_6">Closed Shrublands</div>
-                                            <div class="list-group-item class_7">Open Shrublands</div>
-                                            <div class="list-group-item class_8">Woody Savannas</div>
-                                            <div class="list-group-item class_9">Savannas</div>
-                                            <div class="list-group-item class_10">Grasslands</div>
-                                            <div class="list-group-item class_11">Permanent Wetlands</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="control habitats">
-                                            <div class="list-group-item class_12">Cropland</div>
-                                            <div class="list-group-item class_13">Urban and Built-up</div>
-                                            <div class="list-group-item class_14">Cropland/Natural Vegetation Mosaics</div>
-                                            <div class="list-group-item class_15">Snow and Ice Barren</div>
-                                            <div class="list-group-item class_16">Barren</div>
-                                            <div class="list-group-item class_0">Water Bodies</div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="col-md-12">
+                            <div class="description">
                             </div>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12 metrics">
-                            Metrics here inform about the outcome of the 
-                            distribution refinement and – when validation 
-                            data is available – its success. 
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 metrics_container">
+                        <div class="col-md-12">
+                            <div class="histogram">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -249,7 +131,6 @@
                             <div class="search">
                                         <a 
                                             rel="tooltip"
-                                            title="Refresh using the selected elevation and habitat preferences."
                                             type="button" 
                                             class="btn btn-default btn-lg rerun top_button">
                                             <span class="glyphicon glyphicon-refresh">
@@ -261,6 +142,12 @@
                     <div class="row" >
                         <div class="col-md-12">
                             <div class="map">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" >
+                        <div class="col-md-12">
+                            <div class="metrics">
                             </div>
                         </div>
                     </div>
@@ -280,11 +167,7 @@
                 <h4 class="modal-title" id="myModalLabel">There was a problem...</h4>
               </div>
               <div class="modal-body">
-                  Sorry, something did not behave correctly. If you see 
-                  this message again, please complain to Dave Thau  
-                  thau@google.com
-                  <br>
-                  Thanks!
+                  Sorry, something did not behave correctly.
                   <br>
                   <div class="err"></div>
               </div>
@@ -295,7 +178,8 @@
           </div>
         </div>
         <script type="text/javascript" src="/js/defaults.js"></script>
-        <script type="text/javascript" src="/js/refine.js"></script>
+        <script type="text/javascript" src="/js/histogram.js"></script>
+        <script type="text/javascript" src="/js/distinct.js"></script>
         <script type="text/javascript">
             $(function () {
                 $("[rel='tooltip']").tooltip();
