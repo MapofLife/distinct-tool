@@ -5,6 +5,7 @@ html{}
     margin-top: 0.5em;
     
     padding-top: 0.5em;
+    height:15em;
     
 }
 
@@ -56,6 +57,7 @@ html{}
 
 .description {
     padding-top:1em;
+    height:15em;
 }
 
 .habitats {

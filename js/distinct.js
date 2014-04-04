@@ -250,7 +250,7 @@ function getTaxon(name) {
             $.each(
                 response.rows,
                 function(i,row) {
-                    $('.chart.{0} .box .bar'.format(row.t)).width('{0}%'.format(row.q*100));
+                    $('.chart.{0} .box .bar'.format(row.t)).animate({width:'{0}%'.format(row.q*100)},1500);
                 }
             );
             
