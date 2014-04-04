@@ -8,6 +8,31 @@ html{}
     
 }
 
+.chart {
+    margin:1em 3em;
+}
+.box {
+    width:100%;
+    border: 1pt solid black;
+    border-radius:0.3em;
+    overflow:hidden;
+}
+.chart .labels {
+    width: 120%;
+    margin-left:-10%;
+}
+.chart .labels .label{
+    float:left;
+    width:20%;
+    color: black;
+}
+.chart .box .bar { 
+    width:100%;
+    height: 2em;
+    text-align: right;
+    background-color: steelblue;
+}
+
 .bar rect {
   fill: #8cbf44;
   shape-rendering: crispEdges;

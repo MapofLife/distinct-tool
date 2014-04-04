@@ -8,12 +8,12 @@ var margin = {top: 35, right: 40, bottom: 50, left: 70},
     height = 400 - margin.top - margin.bottom;
 
 var x = d3.scale.linear()
-    .domain([0, 75])
+    .domain([0, 80])
     .range([0, width]);
 
 // Generate a histogram 
 var data = d3.layout.histogram()
-    .bins(x.ticks(75)) //number of bins
+    .bins(x.ticks(80)) //number of bins
     (values.map(function(val){return val[1]}));
 
 var y = d3.scale.linear()
@@ -29,7 +29,7 @@ var yAxis = d3.svg.axis()
     .scale(y)
     .orient('left');
 
-var svg = d3.select(".histogram").append("svg")
+var svg = d3.select(".chart").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")

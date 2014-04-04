@@ -18,26 +18,22 @@ function getImage(name,i) {
         'https://ajax.googleapis.com/ajax/services/search/images?' +
         'v=1.0&q={0}&callback=?'.format(name),
         function(response) {
-            try {
-                console.log(response);
-                loadImage(response.responseData.results[i].url);
-            } catch(e) {
-                console.log('Bad image.');
-                console.log(response);
-                if(i<10) {
-                    getImage(name, i++);
-                }
-            }
+                loadImage(response.responseData.results[i].url, name, i);
         },
         'jsonp'
     );
 }
 
-function loadImage(src) {
+function loadImage(src,name, t) {
     var specimg = $('<img class="specimg">').load(
         function(event) {
             sizeMap();
-        });
+        }).error(
+            function() {
+                var t = i++;
+                getImage(name, t);
+            }
+        );
                             
     $('.image').empty();
     $('.image').append(specimg);
@@ -130,14 +126,26 @@ function init() {
 
       $.getJSON(
           'http://mol.cartodb.com/api/v2/sql',
-          {'q' : 'SELECT species_scientific as n, ed_median as ed FROM distinctness'},
-          function(response) {
-              var data = response.rows.map(
+          {'q' : 'SELECT species_scientific as n, ed_median as ed ' +
+            'FROM distinctness ORDER BY ed_median asc'},
+          function (response) {
+              var histData = response.rows.map(
                   function(row) {
-                      return [row.n,parseFloat(row.ed)]
-                  }
-              );
-              addHistogram(data);
+                      return [
+                        [row.n,row.ed]
+                      ];
+                  });
+                  /*bubData = response.rows.map(
+                      function(row) {
+                          return [
+                            {"name":row.n,
+                             "size": Math.round(parseFloat(row.ed)*100)}
+                          ];
+                      }
+                  );*/
+              //addBubbles({"name":"ED", "children":data});
+              //addHistogram(histData);
+              //addCharts(data);
           }
       );
     
@@ -193,7 +201,32 @@ function updateSpecies(name) {
     mapSpecies(name);
 }
 function getTaxon(name) {
-    var sql = 'SELECT scientificname, initcap("class") as _class, '+
+    var e_sql = "SELECT 'ed' as t, round(ed,2) as v, round(q,2) as q FROM "+
+  "  (SELECT "+
+      " cast(row as numeric)/cast(tot as numeric) as q, "+
+       "cast(ed as numeric) as ed,  "+
+      " n "+
+     "FROM "+
+       "(SELECT "+
+          "row_number() over (order by ed_median asc nulls last)  as row,"+
+          "(SELECT count(*) from distinctness)as tot,           species_scientific as n,"+
+          "ed_median as ed "+
+        "FROM distinctness order by ed asc) ed "+
+     "where n = '{0}') edq "+
+"UNION ALL "+
+"SELECT 'edr' as t, round(edr,2) as v, round(q,2) as q FROM "+
+    "(SELECT "+
+       "cast(row as numeric)/cast(tot as numeric) as q, "+
+       "cast(edr as numeric) as edr,  "+
+       "n "+
+     "FROM "+
+       "(SELECT "+
+         " row_number() over (order by edd_my_10_4km__2 asc nulls last)  as row,"+
+         " (SELECT count(*) from distinctness)as tot,           species_scientific as n,"+
+          "edd_my_10_4km__2 as edr"+
+       " FROM distinctness order by edr asc) edr "+
+     "where n = '{0}') edrq",
+     sql = 'SELECT scientificname, initcap("class") as _class, '+
             'common_names_eng as names, initcap(_order) as _order, ' +
             'initcap(family) AS family, ' +
             'round(cast(ed_95percentile as numeric),2) as ed_95, ' +
@@ -201,11 +234,29 @@ function getTaxon(name) {
             'round(cast(edd_95percentile as numeric),2) as edr_95, ' +
             'round(cast(edd_05percentile as numeric),2) as edr_05, ' +
             'round(cast(edd_my_10_4km__2 as numeric),2) as edr, ' +
+            'round(cast(edge as numeric),2) as edge, ' +
             'round(cast(ed_median as numeric),2) as ed, ed_rank_all, ' +
             "round((SELECT sum(CAST(ST_Area(geography(ST_Transform(the_geom_webmercator,4326)))/1000000 as numeric)) as area FROM get_tile('jetz','range','{0}', 'jetz_maps'))) as area " + 
             'FROM taxonomy t JOIN distinctness d ON '+
-               "d.species_scientific = t.scientificname  WHERE t.scientificname = '{0}'";
-               
+               "d.species_scientific = t.scientificname  WHERE " +
+               " t.scientificname = '{0}'";
+     $.getJSON(
+        'http://mol.cartodb.com/api/v2/sql',
+        {
+            q: e_sql.format(name)
+        },
+        function(response) {
+            var row = [0];
+            $.each(
+                response.rows,
+                function(i,row) {
+                    $('.chart.{0} .box .bar'.format(row.t)).width('{0}%'.format(row.q*100));
+                }
+            );
+            
+           
+        }
+    );
     $.getJSON(
         'http://mol.cartodb.com/api/v2/sql',
         {
@@ -215,25 +266,25 @@ function getTaxon(name) {
             var row = response.rows[0],
                 metrics = [
                 {
-                    'name':'Evolutionary Distinctness (ED)',
-                    'units':'MY (range: {0}-{1})'
+                    'name':'Evolutionary Distinctness',
+                    'units':'MY ({0}-{1} MY)'
                         .format(row.ed_05, row.ed_95),
                     'value':row.ed
                 },{
-                    'name':'Distinctness Rank',
-                    'value':row.ed_rank_all
-                },{
-                    'name':'Distinctness Rarity (EDR)',
-                    'units': 'MY 10⁴ km² (range: {0}-{1})'
+                    'name':'Distinctness Rarity',
+                    'units': 'MY 10⁴ km² ({0}-{1} MY)'
                         .format(row.edr_05, row.edr_95),
                     'value':row.edr
                 },{
+                    'name':'EDGE Score',
+                    'value':row.edge
+                },{
                     'name':'Expert range area',
-                    'value':addCommas(row.area),
+                    'value': addCommas(row.area),
                     'units': 'km²'
                 }
             ];
-            
+
             $('.sciname').html(response.rows[0].scientificname);
             $('.common').html(response.rows[0].names.replace(/,.*/,''));
             if(response.rows[0]._class!=null) {        
