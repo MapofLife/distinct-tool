@@ -1,14 +1,17 @@
-html{}
+html{font-size:100%;}
 
 .info {
-    font-size:10pt;
+    font-size:1.2em;
     margin-top: 0.5em;
     
     padding-top: 0.5em;
-    height:15em;
+    max-height:13em;
     
 }
 
+.expand {
+    cursor: pointer;
+}
 .chart {
     margin:1em 3em;
 }
@@ -22,6 +25,12 @@ html{}
     width: 120%;
     margin-left:-10%;
 }
+.chart .title {
+    width: 140%;
+    margin-left:-20%;
+    font-size: 1.3em;
+    text-align: center;
+}
 .chart .labels .label{
     float:left;
     width:20%;
@@ -34,21 +43,6 @@ html{}
     background-color: steelblue;
 }
 
-.bar rect {
-  fill: #8cbf44;
-  shape-rendering: crispEdges;
-}
-
-.bar text {
-  fill: #fff;
-}
-
-.axis path, .axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-
 .controls {
     margin-top: 0.5em;
     border-top: 0.2em solid gray;
@@ -56,8 +50,10 @@ html{}
 }
 
 .description {
-    padding-top:1em;
-    height:15em;
+    margin-top:0.5em;
+    max-height:10em;
+    overflow-y: auto;
+    font-size: 1.2em;
 }
 
 .habitats {
@@ -67,14 +63,14 @@ html{}
     background-image: linear-gradient(to bottom,#8cbf44 0,#7bae33 100%);
 }
 .common:first-line {
-    font-size: 22pt;
+    font-size: 1.5em;
     line-height:15pt;
 }
 .common {
-    font-size: 16pt;
+    font-size: 1.2em;
 }
 .sciname{
-    font-size:14pt;
+    font-size:1.2em;
     font-style: italic;
     
 }
@@ -84,8 +80,8 @@ html{}
 }
 
 .specimg {
-    width:100%;
-    max-height: 15em;
+    max-height: 150px;
+    max-width:100%;
     border-radius: 1em;
 }
 .image {
@@ -119,6 +115,17 @@ html{}
     
 }
 
+.random {
+    border-radius: 1em;
+}
+
+.btn-group>.btn:first-child:not(:last-child):not(.dropdown-toggle) {
+ border-radius: 1em; 
+}
+
+.dropdown-menu {
+    width:100%;
+}
 .rerun {
     float:right;
 }
@@ -147,21 +154,7 @@ html{}
     width: 100%;
 }
 
-.body {
-    font-family: 
-        "Cantarell",
-        "Helvetica Neue",
-        Helvetica,
-        Arial,
-        "Lucida Grande",
-        sans-serif;
-}
-.logo {
-    height:80px;
-    margin-right: 10px;
-}
 .map {
-    max-height: 30em;
     height: 20em;
     border-radius:1em;
     border: 0.2em solid gray;

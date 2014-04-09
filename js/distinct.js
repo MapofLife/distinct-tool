@@ -1,5 +1,4 @@
-var scientificname = getURLParameter("name"),
-    latest = 0, 
+var latest = 0, 
     commonnames = '',
     modis_maptypes = {},
     mod_params,
@@ -13,31 +12,37 @@ var scientificname = getURLParameter("name"),
 google.setOnLoadCallback(init);
 
 function getImage(name,i) {
-
+    $('.image').empty();
     $.getJSON(
         'https://ajax.googleapis.com/ajax/services/search/images?' +
         'v=1.0&q={0}&callback=?'.format(name),
         function(response) {
-                loadImage(response.responseData.results[i].url, name, i);
+                if(response.responseData != null) {
+                    loadImage(response.responseData.results[i].url, name, i);
+                } else {
+                    getImage(name,(i+1));
+                }
         },
         'jsonp'
     );
 }
 
-function loadImage(src,name, t) {
-    var specimg = $('<img class="specimg">').load(
-        function(event) {
-            sizeMap();
-        }).error(
-            function() {
-                var t = i++;
-                getImage(name, t);
-            }
-        );
+function loadImage(src,name, i) {
+    var specimg = $('<img class="specimg" src="{0}">'.format(src))
+        .load(
+            function(event) {
+                //sizeMap();
+                $('.image').empty();
+                $('.image').append(this);
+               
+            }).error(
+                function() {
+                    var n = i+1;
+                    getImage(name, n);
+                }
+            );
                             
-    $('.image').empty();
-    $('.image').append(specimg);
-    $('.specimg').attr('src',src);
+    
 }
 
 function getURLParameter(name) {
@@ -70,9 +75,9 @@ function init() {
                 queryTokenizer: Bloodhound.tokenizers.whitespace,
                 limit: 100,
                 remote: {
-                    url: 'http://mol.cartodb.com/api/v1/sql?q=' +
+                    url: 'http://d3dvrpov25vfw0.cloudfront.net/api/v1/sql?q=' +
                     'SELECT n, v FROM ac ' +
-                    'LEFT JOIN distinctness d ' +
+                    'JOIN distinctness d ' +
                     'ON ac.n = d.species_scientific ' +
                     'WHERE ' +
                     "(n || ' ' || v) ~* '\\m%QUERY' LIMIT 300",
@@ -108,8 +113,11 @@ function init() {
             'typeahead:selected',
             function(evt,item) {
                 updateSpecies(item.n);
+          
             }
         );
+        //messy
+        $('.typeahead').css('padding-left','1em');
       
       
       
@@ -124,34 +132,9 @@ function init() {
           }
       );
 
-      $.getJSON(
-          'http://mol.cartodb.com/api/v2/sql',
-          {'q' : 'SELECT species_scientific as n, ed_median as ed ' +
-            'FROM distinctness ORDER BY ed_median asc'},
-          function (response) {
-              var histData = response.rows.map(
-                  function(row) {
-                      return [
-                        [row.n,row.ed]
-                      ];
-                  });
-                  /*bubData = response.rows.map(
-                      function(row) {
-                          return [
-                            {"name":row.n,
-                             "size": Math.round(parseFloat(row.ed)*100)}
-                          ];
-                      }
-                  );*/
-              //addBubbles({"name":"ED", "children":data});
-              //addHistogram(histData);
-              //addCharts(data);
-          }
-      );
-    
-      //init bootstrap switches
-      $('.switch').bootstrapSwitch();
-      $('.switch').show();
+      $('.selectpicker').selectpicker({width:'100%'});
+      $('.search button').addClass('top_button');
+      
       
       $('.random').click(
           function() {
@@ -159,16 +142,20 @@ function init() {
               $(this).removeClass('active');
           }
       );
-     
-    if(getURLParameter("name")!='null') {
-        getName(getURLParameter("name"));
+    name = unescape(location.pathname.split('/').pop());
+    name = name.replace(/_/g,' ');
+    
+    if(name.split(' ').length>1) {
+        updateSpecies(name);
     } else {
         getRandom();
     }
+    $("[rel='tooltip']").tooltip();
+           
 }
 function getName(name) {
     $.getJSON(
-        'http://mol.cartodb.com/api/v2/sql', 
+        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql', 
         params, 
         callBackend
         ).error(
@@ -182,106 +169,82 @@ function getWiki(name) {
         'http://api.map-of-life.appspot.com/wiki',
         {name:name, api_key:'allyourbase'},
         function(response) {
-            $('.description').text(shorten(response.content,500));
+            $('.description').html(shorten(response.content,400));
+            $('.description .expand').click(
+                function(){
+                    $('.description').html(response.content);
+                }
+            );
         }
     );
 }
 function shorten(text, maxLength) {
     var ret = text;
     if (ret.length > maxLength) {
-        ret = ret.substr(0,maxLength-3) + 
-            "...";
+        ret = ret.substr(0,maxLength-3);
+        ret = ret.substr(0, ret.lastIndexOf('.')) + 
+            "<a class='expand' rel='tooltip' title='Click for more'>...</a>";
     }
     return ret;
 }
 function updateSpecies(name) {
+    history.pushState('data','', '/info/birds/{0}'.format(name.replace(/ /g,'_')));
     getTaxon(name);
     getImage(name, 0);
     getWiki(name);
     mapSpecies(name);
 }
 function getTaxon(name) {
-    var e_sql = "SELECT 'ed' as t, round(ed,2) as v, round(q,2) as q FROM "+
-  "  (SELECT "+
-      " cast(row as numeric)/cast(tot as numeric) as q, "+
-       "cast(ed as numeric) as ed,  "+
-      " n "+
-     "FROM "+
-       "(SELECT "+
-          "row_number() over (order by ed_median asc nulls last)  as row,"+
-          "(SELECT count(*) from distinctness)as tot,           species_scientific as n,"+
-          "ed_median as ed "+
-        "FROM distinctness order by ed asc) ed "+
-     "where n = '{0}') edq "+
-"UNION ALL "+
-"SELECT 'edr' as t, round(edr,2) as v, round(q,2) as q FROM "+
-    "(SELECT "+
-       "cast(row as numeric)/cast(tot as numeric) as q, "+
-       "cast(edr as numeric) as edr,  "+
-       "n "+
-     "FROM "+
-       "(SELECT "+
-         " row_number() over (order by edd_my_10_4km__2 asc nulls last)  as row,"+
-         " (SELECT count(*) from distinctness)as tot,           species_scientific as n,"+
-          "edd_my_10_4km__2 as edr"+
-       " FROM distinctness order by edr asc) edr "+
-     "where n = '{0}') edrq",
-     sql = 'SELECT scientificname, initcap("class") as _class, '+
+    var sql = 'SELECT scientificname, initcap("class") as _class, '+
             'common_names_eng as names, initcap(_order) as _order, ' +
             'initcap(family) AS family, ' +
+            'round(cast(edr_q as numeric),2) as edr_q, ' +
+            'round(cast(ed_q as numeric),2) as ed_q, ' +
+            'round(cast(edge_q as numeric),2) as edge_q, ' +
+            'round((cast(area as numeric)/1000000)/10000,2) as area, ' +
+            'round(cast(area_q as numeric),2) as area_q, ' +
             'round(cast(ed_95percentile as numeric),2) as ed_95, ' +
             'round(cast(ed_05percentile as numeric),2) as ed_05, ' +
             'round(cast(edd_95percentile as numeric),2) as edr_95, ' +
             'round(cast(edd_05percentile as numeric),2) as edr_05, ' +
             'round(cast(edd_my_10_4km__2 as numeric),2) as edr, ' +
             'round(cast(edge as numeric),2) as edge, ' +
-            'round(cast(ed_median as numeric),2) as ed, ed_rank_all, ' +
-            "round((SELECT sum(CAST(ST_Area(geography(ST_Transform(the_geom_webmercator,4326)))/1000000 as numeric)) as area FROM get_tile('jetz','range','{0}', 'jetz_maps'))) as area " + 
+            'round(cast(ed_median as numeric),2) as ed ' +
             'FROM taxonomy t JOIN distinctness d ON '+
                "d.species_scientific = t.scientificname  WHERE " +
-               " t.scientificname = '{0}'";
-     $.getJSON(
-        'http://mol.cartodb.com/api/v2/sql',
-        {
-            q: e_sql.format(name)
-        },
-        function(response) {
-            var row = [0];
-            $.each(
-                response.rows,
-                function(i,row) {
-                    $('.chart.{0} .box .bar'.format(row.t)).animate({width:'{0}%'.format(row.q*100)},1500);
-                }
-            );
-            
-           
-        }
-    );
+               " t.scientificname ILIKE '{0}'";
     $.getJSON(
-        'http://mol.cartodb.com/api/v2/sql',
+        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql',
         {
             q: sql.format(name)
         },
         function(response) {
             var row = response.rows[0],
-                metrics = [
+                charts = [
                 {
-                    'name':'Evolutionary Distinctness',
-                    'units':'MY ({0}-{1} MY)'
-                        .format(row.ed_05, row.ed_95),
-                    'value':row.ed
+                    'id':'ed',
+                    'name':'Evolutionary Distinctness: {0} MY ({1}-{2})'
+                        .format(row.ed,row.ed_05, row.ed_95),
+                    'value':row.ed_q*100,
+                    'scale': [0.77,4.23,6.19,9.14,72.77]
+                    
                 },{
-                    'name':'Distinctness Rarity',
-                    'units': 'MY 10⁴ km² ({0}-{1} MY)'
-                        .format(row.edr_05, row.edr_95),
-                    'value':row.edr
+                    'id': 'edr',
+                    'name':'Evolutionary Distinctness Rarity: {0} MY 10⁴ km² ({1}-{2})'
+                        .format(row.edr, row.edr_05, row.edr_95),
+                    'value':row.edr_q*100,
+                    'scale': [0,0.02,0.07,0.26,9.95]
+                    
                 },{
-                    'name':'EDGE Score',
-                    'value':row.edge
+                    'id':'edge',
+                    'name':'EDGE Score: {0}'.format(row.edge),
+                    'value':row.edge_q*100,
+                    'scale': [0.58,1.76,2.13,2.69,6.83]
                 },{
-                    'name':'Expert range area',
-                    'value': addCommas(row.area),
-                    'units': 'km²'
+                    'id':'area',
+                    'name':'Expert range area: {0} 10⁴ km²'.format(addCommas(row.area)),
+                    'value': row.area_q*100 ,
+                    'scale': [0,4.54,31.62,164.35,'23,085.92']
                 }
             ];
 
@@ -295,20 +258,29 @@ function getTaxon(name) {
                 'Family: {0}'.format(response.rows[0].family));
             $('._order').html(
                 'Order:{0}'.format(response.rows[0]._order));
-                
-                
             
-            $('.metrics').empty();
+            
             $.each(
-                metrics,
-                function (i, metric) {
-                    $('.metrics').append($(
-                           Handlebars.compile(
-                               $('#metric').html())(metric)
-                                   .trim())[0]);
+                charts,
+                function (i, chart) {
+                    if($('.chart.{0}'.format(chart.id)).length>0) {
+                        $('.chart.{0} .title'.format(chart.id)).html(
+                            chart.name
+                        );
+                        
+                        $('.chart.{0} .bar'.format(chart.id))
+                            .animate(
+                                {width:'{0}%'.format(chart.value)},
+                                1500
+                            );
+                    } else {
+                        $('.chart_{0}'.format((i&1) ? 'right' : 'left')).append($(
+                               Handlebars.compile(
+                                   $('#scale_chart').html())(chart)
+                                       .trim())[0]);
+                    }
                 }
             );
-            selectBucket(response.rows[0].ed);
         }
     );
 }
@@ -365,6 +337,8 @@ function addCommas(val){
     if (val < 0) {
         return val.toString();
     }
+    val = Math.round(val*100)/100
+    
     while (/(\d+)(\d{3})/.test(val.toString())){
       val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
     }
