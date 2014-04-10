@@ -9,7 +9,7 @@ var latest = 0,
     map = new google.maps.Map($('.map')[0],defaults.map_options),
     mapIt = $('<button class="mapit top_button btn btn-default">Map species</button>')[0];
     
-    map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(mapIt);
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(mapIt);
                     
 google.setOnLoadCallback(init);
 
@@ -17,7 +17,7 @@ function getImage(name,i) {
     $('.image').empty();
     $.getJSON(
         'https://ajax.googleapis.com/ajax/services/search/images?' +
-        'v=1.0&q={0}&callback=?'.format(name),
+        'v=1.0&q={0} -egg -nest -map -range&callback=?'.format(name),
         function(response) {
                 if(response.responseData != null) {
                     loadImage(response.responseData.results[i].url, name, i);
@@ -243,7 +243,7 @@ function getTaxon(name) {
                     
                 },{
                     'id':'edge',
-                    'title' : "A score combining Evolutionary Distinctness and IUCN threat status.",
+                    'title' : "A score combining Evolutionary Distinctness and IUCN threat status",
                     'quantile':row.edge_q*100,
                     'value': 'EDGE Score: {0}'.format(row.edge),
                     'rank': 'Rank: {0}'.format(row.edge_rank),
@@ -252,7 +252,7 @@ function getTaxon(name) {
                     'href': 'window.open("http://www.edgeofexistence.org/")'
                 },{
                     'id':'area',
-                    'title' : "Size of a species’ broad geographic extent, overestimates actual distribution area. Click to map this species",
+                    'title' : "Size of a species’ broad geographic extent, overestimates actual distribution area",
                     'value':'Expert range area: {0} 10⁴ km²'
                         .format(addCommas(row.area)),
                     'quantile': row.area_q*100 ,
