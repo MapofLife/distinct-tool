@@ -20,14 +20,14 @@ class BaseHandler(webapp2.RequestHandler):
         path = os.path.join(os.path.dirname(__file__), "server_templates", f)
         self.response.out.write(open(path, 'r').read())
 
-class DistinctTool(BaseHandler):
+class InfoPage(BaseHandler):
     def get(self):
-        self.push_html('distinct-template.html')
+        self.push_html('info-template.html')
     def post(self):
-        self.push_html('distinct-template.html')
+        self.push_html('info-template.html')
 
 application = webapp2.WSGIApplication(
-         [('/', DistinctTool), ('/.*',DistinctTool)],
+         [('/', InfoPage), ('/.*',InfoPage)],
          debug=True)
 
 def main():

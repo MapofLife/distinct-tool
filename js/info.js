@@ -6,8 +6,10 @@ var latest = 0,
     speciesPrefs,
     host = '', //(window.location.hostname != 'localhost') ?
         //'http://d152fom84hgyre.cloudfront.net/' : '',
-    map = new google.maps.Map($('.map')[0],defaults.map_options);
+    map = new google.maps.Map($('.map')[0],defaults.map_options),
+    mapIt = $('<button class="mapit top_button btn btn-default">Map species</button>')[0];
     
+    map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(mapIt);
                     
 google.setOnLoadCallback(init);
 
@@ -169,7 +171,7 @@ function getWiki(name) {
         'http://api.map-of-life.appspot.com/wiki',
         {name:name, api_key:'allyourbase'},
         function(response) {
-            $('.description').html(shorten(response.content,400));
+            $('.description').html(shorten(response.content,600));
             $('.description .expand').click(
                 function(){
                     $('.description').html(response.content);
@@ -199,17 +201,15 @@ function getTaxon(name) {
             'common_names_eng as names, initcap(_order) as _order, ' +
             'initcap(family) AS family, ' +
             'round(cast(edr_q as numeric),2) as edr_q, ' +
+            'edr_rank,' +
             'round(cast(ed_q as numeric),2) as ed_q, ' +
             'round(cast(edge_q as numeric),2) as edge_q, ' +
-            'round((cast(area as numeric)/1000000)/10000,2) as area, ' +
+            'round((cast(area as numeric)/1000000)/10000,1) as area, ' +
+            'area_rank, ' +
             'round(cast(area_q as numeric),2) as area_q, ' +
-            'round(cast(ed_95percentile as numeric),2) as ed_95, ' +
-            'round(cast(ed_05percentile as numeric),2) as ed_05, ' +
-            'round(cast(edd_95percentile as numeric),2) as edr_95, ' +
-            'round(cast(edd_05percentile as numeric),2) as edr_05, ' +
             'round(cast(edd_my_10_4km__2 as numeric),2) as edr, ' +
-            'round(cast(edge as numeric),2) as edge, ' +
-            'round(cast(ed_median as numeric),2) as ed ' +
+            'round(cast(edge as numeric),1) as edge, edge_rank,  ' +
+            'round(cast(ed_median as numeric),2) as ed, ed_rank_all ' +
             'FROM taxonomy t JOIN distinctness d ON '+
                "d.species_scientific = t.scientificname  WHERE " +
                " t.scientificname ILIKE '{0}'";
@@ -223,28 +223,42 @@ function getTaxon(name) {
                 charts = [
                 {
                     'id':'ed',
-                    'name':'Evolutionary Distinctness: {0} MY ({1}-{2})'
-                        .format(row.ed,row.ed_05, row.ed_95),
-                    'value':row.ed_q*100,
-                    'scale': [0.77,4.23,6.19,9.14,72.77]
+                    'title' : 'The evolutionary history a species contributes to the avian tree of life',
+                    'quantile':row.ed_q*100,
+                    'value':'ED: {0} MY'.format(row.ed),
+                    'rank': 'Rank: {0}'.format(row.ed_rank_all),
+                    'units' : 'Evolutionary Distinctness (MY)',
+                    'scale': [0.77,4.23,6.19,9.14,72.77],
+                    'href': 'window.open("http://www.mol.org/projects/ED")'
                     
                 },{
                     'id': 'edr',
-                    'name':'Evolutionary Distinctness Rarity: {0} MY 10⁴ km² ({1}-{2})'
-                        .format(row.edr, row.edr_05, row.edr_95),
-                    'value':row.edr_q*100,
-                    'scale': [0,0.02,0.07,0.26,9.95]
+                    'title' : "The spatial concentration of a species’ evolutionary history",
+                    'quantile':row.edr_q*100,
+                    'value': 'ED: {0} MY / 10⁴ km²'.format(row.edr),
+                    'rank': 'Rank: {0}'.format(row.edr_rank),
+                    'units' : 'Evolutionary Distinctness Rarity (MY / 10⁴ km²)',
+                    'scale': [0,0.02,0.07,0.26,9.95],
+                    'href': 'window.open("http://www.mol.org/projects/ED")'
                     
                 },{
                     'id':'edge',
-                    'name':'EDGE Score: {0}'.format(row.edge),
-                    'value':row.edge_q*100,
-                    'scale': [0.58,1.76,2.13,2.69,6.83]
+                    'title' : "A score combining Evolutionary Distinctness and IUCN threat status.",
+                    'quantile':row.edge_q*100,
+                    'value': 'EDGE Score: {0}'.format(row.edge),
+                    'rank': 'Rank: {0}'.format(row.edge_rank),
+                    'units': 'EDGE Score',
+                    'scale': [0.58,1.76,2.13,2.69,6.83],
+                    'href': 'window.open("http://www.edgeofexistence.org/")'
                 },{
                     'id':'area',
-                    'name':'Expert range area: {0} 10⁴ km²'.format(addCommas(row.area)),
-                    'value': row.area_q*100 ,
-                    'scale': [0,4.54,31.62,164.35,'23,085.92']
+                    'title' : "Size of a species’ broad geographic extent, overestimates actual distribution area. Click to map this species",
+                    'value':'Expert range area: {0} 10⁴ km²'
+                        .format(addCommas(row.area)),
+                    'quantile': row.area_q*100 ,
+                     'rank': 'Rank: {0}'.format(row.area_rank),
+                    'units': 'Expert range area (10⁴ km²)',
+                    'scale': [0,4.5,31.6,164.4,'23,086']
                 }
             ];
 
@@ -267,11 +281,18 @@ function getTaxon(name) {
                         $('.chart.{0} .title'.format(chart.id)).html(
                             chart.name
                         );
+                        $('.chart.{0} .bar .values'.format(chart.id)).empty();
                         
                         $('.chart.{0} .bar'.format(chart.id))
                             .animate(
-                                {width:'{0}%'.format(chart.value)},
-                                1500
+                                {width:'{0}%'.format(chart.quantile)},
+                                1500,
+                                function() {
+                                   $('.chart.{0} .values.value'.format(chart.id))
+                                        .text(chart.value);
+                                   $('.chart.{0} .values.quantile'.format(chart.id))
+                                        .text(chart.rank);
+                                }
                             );
                     } else {
                         $('.chart_{0}'.format((i&1) ? 'right' : 'left')).append($(
@@ -279,8 +300,13 @@ function getTaxon(name) {
                                    $('#scale_chart').html())(chart)
                                        .trim())[0]);
                     }
+                    $("[rel='tooltip']").tooltip();
                 }
             );
+            $('.rank_label').hide();
+            $($('.chart_left .rank_label')[1]).show();
+            $($('.chart_right .rank_label')[1]).show();
+            
         }
     );
 }
@@ -319,9 +345,17 @@ function mapSpecies(name) {
                 new google.maps.LatLng(response.rows[0].miny, response.rows[0].minx),
                 new google.maps.LatLng(response.rows[0].maxy, response.rows[0].maxx)
             );
+            
+            $('.mapit')
+                .click(
+                    function() {
+                        window.location.href='http://map.mol.org/maps/{0}'
+                            .format(name.replace(/ /g,'_'));
+                    }
+                );
            
             map.fitBounds(bounds);
-            
+           
             
         }
     );  

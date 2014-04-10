@@ -13,7 +13,7 @@
             href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="/css/screen.css" />
-        <link rel="stylesheet" type="text/css"href="/css/refine.css" />
+        <link rel="stylesheet" type="text/css"href="/css/info.css" />
         <link rel="icon" href="/images/favicon128.png" type="image/png">
         <script type="text/javascript" src="http://www.google.com/jsapi"></script>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
@@ -60,20 +60,45 @@
         <!--[if IE ]>
             <link href="css/ie.css" rel="stylesheet" type="text/css">
         <![endif]-->
+        
         <script id="scale_chart" type="text/x-handlebars-template">
             <div class="chart {{id}}">
-                <div class="title">{{name}}</div>
+                <div onclick="{{href}}" class="title" 
+                    rel="tooltip" title="{{title}}">
+                    {{units}}
+                </div>
                 <div class="labels">
                     {{#each scale}}
                     <div class="label">
                         {{this}}
                     </div>
                     {{/each}}
-                </row>
                 </div>
                 <div class="box">
-                    <div class="bar" style="width:{{value}}%"></div>
+                    
+                    <div class="bar" style="width:{{quantile}}%">
+                        <div class="values value">{{value}}</div>
+                        <div class="values quantile">{{rank}}</div>
+                    </div>
                 </div>
+                <div class="labels">
+                    <div class="label">
+                        Last
+                    </div>
+                    <div class="label">
+                        
+                    </div>
+                    <div class="label">
+                        Middle
+                    </div>
+                    <div class="label">
+                       
+                    </div>
+                    <div class="label">
+                        First
+                    </div>
+                </div>
+                <div class="rank_label">Rank</div>
             </div>
         </script>
     </head>
@@ -135,7 +160,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="image col-md-5">
+                            <div class="col-md-5">
+                                <div class="image"></div>
                             </div>
                         </div>
                     </div>
@@ -148,7 +174,7 @@
                 </div>
                 <div class="right col-md-6">
                     <div class="top row" >
-                        <div class="col-md-6">
+                        <div class="col-md-6 search_col">
                             <div class="search">
                                 <input type="text" 
                                     placeholder="Search by species name"
@@ -157,19 +183,17 @@
                                     class="typeahead" />
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 pick_col">
                              <div rel="tooltip" class="search">
                                  <div class="btn-group">
                                     <button 
                                         class ="random top_button btn btn-default top_dropdown-toggle">
-                                        <!--data-toggle="dropdown"-->
-                                    Pick random
-                                        <!--<span class="caret"></span>-->
+                                        Pick random
                                     </button>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 group_col">
                             <div class="search" rel="tooltip" title="Currently for birds only!">
                                 <select class="selectpicker" style="display:none">
                                     <option selected value="Birds">Birds</option>
@@ -224,7 +248,7 @@
           </div>
         </div>
         <script type="text/javascript" src="/js/defaults.js"></script>
-        <script type="text/javascript" src="/js/distinct.js?cache=768625"></script>
+        <script type="text/javascript" src="/js/info.js?cache=768625"></script>
        
        
     </body>
