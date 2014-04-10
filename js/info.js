@@ -4,14 +4,18 @@ var latest = 0,
     mod_params,
     chartData = [],
     speciesPrefs,
-    host = '', //(window.location.hostname != 'localhost') ?
-        //'http://d152fom84hgyre.cloudfront.net/' : '',
-    map = new google.maps.Map($('.map')[0],defaults.map_options),
+    host = '', 
+    map = new google.maps.Map($('.map')[0],defaults.map_options), mapIt;
+try {
     mapIt = $('<button class="mapit top_button btn btn-default">Map species</button>')[0];
     
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(mapIt);
                     
-google.setOnLoadCallback(init);
+    google.setOnLoadCallback(init);
+    alert('Map loaded!');
+} catch(e) {
+    alert('No map!');
+};
 
 function getImage(name,i) {
     $('.image').empty();
@@ -33,7 +37,7 @@ function loadImage(src,name, i) {
     var specimg = $('<img class="specimg" src="{0}">'.format(src))
         .load(
             function(event) {
-                //sizeMap();
+             
                 $('.image').empty();
                 $('.image').append(this);
                
@@ -59,17 +63,17 @@ function getRandom() {
                'FROM ac  ' +
                'JOIN distinctness d ON ac.n = d.species_scientific ' +
                'LIMIT 1 OFFSET 9999*RANDOM()' 
-               //33834 is the number of species we have to choose from
+             
         },
         function (result) {
-            //$('.search').val(getEE_ID(result.rows[0].binomial));
+           
             $('.search .typeahead').val(result.rows[0].n);
             updateSpecies(result.rows[0].n);
         }
     );
 }
 function init() {
-        //Set up autocomplete
+       
         var species = new Bloodhound({
                 datumTokenizer: function (d) {
                     return Bloodhound.tokenizers.whitespace(d.value);
@@ -118,7 +122,7 @@ function init() {
           
             }
         );
-        //messy
+       
         $('.typeahead').css('padding-left','1em');
       
       
@@ -167,10 +171,12 @@ function getName(name) {
         );    
 }
 function getWiki(name) {
+    alert('Lets call wikipedia!');
     $.getJSON(
         'http://api.map-of-life.appspot.com/wiki',
         {name:name, api_key:'allyourbase'},
         function(response) {
+           alert('Wikipedia answered!');
             $('.description').html(shorten(response.content,600));
             $('.description .expand').click(
                 function(){
@@ -190,7 +196,10 @@ function shorten(text, maxLength) {
     return ret;
 }
 function updateSpecies(name) {
-    history.pushState('data','', '/info/birds/{0}'.format(name.replace(/ /g,'_')));
+    try{
+        history.pushState('data','', '/info/birds/{0}'.format(name.replace(/ /g,'_')));
+    } catch(e) {}
+    
     getTaxon(name);
     getImage(name, 0);
     getWiki(name);
