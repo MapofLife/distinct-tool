@@ -12,9 +12,8 @@ try {
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(mapIt);
                     
     google.setOnLoadCallback(init);
-    alert('Map loaded!');
-} catch(e) {
-    alert('No map!');
+    } catch(e) {
+   
 };
 
 function getImage(name,i) {
@@ -57,7 +56,7 @@ function getURLParameter(name) {
 }
 function getRandom() {
     $.getJSON(
-        'http://mol.cartodb.com/api/v1/sql',
+        'http://mol.cartodb.com/api/v1/sql?callback=?',
         {
             q: 'SELECT n ' +
                'FROM ac  ' +
@@ -86,7 +85,7 @@ function init() {
                     'JOIN distinctness d ' +
                     'ON ac.n = d.species_scientific ' +
                     'WHERE ' +
-                    "(n || ' ' || v) ~* '\\m%QUERY' LIMIT 300",
+                    "(n || ' ' || v) ~* '\\m%QUERY' LIMIT 300&callback=?",
                     filter: function (response) {
                         return response.rows; 
                     }
@@ -161,7 +160,7 @@ function init() {
 }
 function getName(name) {
     $.getJSON(
-        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql', 
+        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql?callback=?', 
         params, 
         callBackend
         ).error(
@@ -171,13 +170,12 @@ function getName(name) {
         );    
 }
 function getWiki(name) {
-    alert('Lets call wikipedia!');
+    
     $.getJSON(
-        'http://api.map-of-life.appspot.com/wiki',
+        'http://api.map-of-life.appspot.com/wiki?callback=?',
         {name:name, api_key:'allyourbase'},
         function(response) {
-           alert('Wikipedia answered!');
-            $('.description').html(shorten(response.content,600));
+                      $('.description').html(shorten(response.content,600));
             $('.description .expand').click(
                 function(){
                     $('.description').html(response.content);
@@ -223,7 +221,7 @@ function getTaxon(name) {
                "d.species_scientific = t.scientificname  WHERE " +
                " t.scientificname ILIKE '{0}'";
     $.getJSON(
-        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql',
+        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql?callback=?',
         {
             q: sql.format(name)
         },
@@ -304,8 +302,9 @@ function getTaxon(name) {
                                 }
                             );
                     } else {
-                        $('.chart_{0}'.format((i&1) ? 'right' : 'left')).append($(
-                               Handlebars.compile(
+                        $('.chart_{0}'.format((i&1) ? 'right' : 'left'))
+                            .append($(
+                                Handlebars.compile(
                                    $('#scale_chart').html())(chart)
                                        .trim())[0]);
                     }
@@ -346,7 +345,7 @@ function mapSpecies(name) {
     map.overlayMapTypes.clear();
     map.overlayMapTypes.push(cdb_maptype); 
     $.getJSON(
-        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql',
+        'http://d3dvrpov25vfw0.cloudfront.net/api/v2/sql?callback=?',
         {q: sql.format(name)
         }, 
         function(response) {
